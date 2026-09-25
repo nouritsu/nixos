@@ -33,9 +33,11 @@ jobs:
       # derivations. Warnings are expected and must not fail the run: the
       # options.json one comes from home-manager upstream.
       - name: evaluate every flake output
-        run: nix flake check --no-build --show-trace
+        run: |
+          nix eval --json --show-trace .#nixosConfigurations \
+            --apply 'builtins.mapAttrs (_: c: c.config.system.build.toplevel.drvPath)'
+          nix eval --json --show-trace .#packages.x86_64-linux \
+            --apply 'builtins.mapAttrs (_: p: p.drvPath)'
 
-      # --no-build skips the checks as well, so treefmt needs its own step.
-      # It is small: alejandra and deadnix over 95 files, a few seconds.
       - name: check formatting and dead code
         run: nix build --no-link .#checks.x86_64-linux.treefmt
