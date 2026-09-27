@@ -20,6 +20,8 @@
       # store and the beszel agent that consumes it are pc-scoped.
       secrets
       services.beszel
+      nix.serve
+      nix.builds-on-laptop
 
       # Inbound ssh from the laptop.
       ssh.from-laptop

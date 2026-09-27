@@ -15,6 +15,8 @@
 
       # Inbound ssh from the desktop.
       ssh.from-pc
+      nix.from-pc
+      nix.builds-from-pc
     ];
   };
 }

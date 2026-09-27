@@ -11,7 +11,6 @@
   in {
     nixos = {config, ...}: {
       imports = [
-        inputs.determinate.nixosModules.default
         inputs.nix-index-database.nixosModules.default
       ];
 
@@ -36,6 +35,12 @@
       };
 
       nix.settings.trusted-users = ["root" "@wheel"];
+      nix.settings.experimental-features = ["nix-command" "flakes"];
+      nix.settings.always-allow-substitutes = true;
+
+      # no global registry; /etc/nix/registry.json still has nixpkgs
+      nix.settings.flake-registry = "";
+      nix.channel.enable = false;
 
       # TODO: move to per app
       nix.settings.extra-substituters = [

@@ -24,6 +24,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+      - uses: cachix/install-nix-action@v31
 
       # The same Nix the hosts run, so an evaluation difference surfaces here
       # rather than at switch time.
