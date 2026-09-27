@@ -20,7 +20,6 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    cachix.url = "github:cachix/cachix";
 
     # Theming
     catppuccin.url = "github:catppuccin/nix";
@@ -34,17 +33,37 @@
     cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel";
     lanzaboote.url = "github:nix-community/lanzaboote";
     helix.url = "github:helix-editor/helix/master";
-    niri.url = "github:sodiboo/niri-flake";
-    hyprlock.url = "github:hyprwm/hyprlock";
-    spicetify-nix.url = "github:Gerg-L/spicetify-nix";
-    dms.url = "github:AvengeMedia/DankMaterialShell";
-    dms-plugin-registry.url = "github:AvengeMedia/dms-plugin-registry";
     yazi.url = "github:sxyazi/yazi";
+
+    # follows: niri dlopens the system GL drivers, so its glibc must match
+    niri = {
+      url = "github:niri-wm/niri";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    dms = {
+      url = "github:AvengeMedia/DankMaterialShell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    spicetify-nix = {
+      url = "github:Gerg-L/spicetify-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    dms-plugin-registry = {
+      url = "github:AvengeMedia/dms-plugin-registry";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     batfetch = {
       url = "github:ashish-kus/batfetch";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    sops-nix.url = "github:Mic92/sops-nix";
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     wrappers = {
       url = "github:BirdeeHub/nix-wrapper-modules";
