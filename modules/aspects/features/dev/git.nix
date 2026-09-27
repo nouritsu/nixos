@@ -1,42 +1,54 @@
 {
-  den.aspects.git.homeManager = {pkgs, ...}: {
-    programs.git = {
-      enable = true;
-      settings.user = {
-        name = "Aneesh Bhave";
-        email = "aneesh1701@gmail.com";
-      };
-    };
-    programs.lazygit.enable = true;
-    programs.fish.plugins = [
-      {
-        name = "forgit";
-        src = pkgs.fishPlugins.forgit.src;
-      }
-    ];
-    programs.delta.enableGitIntegration = true;
-
-    programs.gh = {
-      enable = true;
-      extensions = [
-        pkgs.gh-markdown-preview
-        pkgs.gh-poi
-        pkgs.gh-f
+  den.aspects.git = {
+    nixos = {
+      self',
+      pkgs,
+      ...
+    }: let
+      git = self'.packages.git;
+    in {
+      environment.systemPackages = [
+        self'.packages.delta
+        self'.packages.jujutsu
+        self'.packages.lazygit
+        self'.packages.jjui
+        pkgs.fishPlugins.forgit
       ];
-    };
-    programs.gh-dash.enable = true;
 
-    programs.jujutsu = {
-      enable = true;
-      settings.user = {
-        name = "Aneesh Bhave";
-        email = "aneesh1701@gmail.com";
+      programs.git = {
+        enable = true;
+        package = git;
       };
-    };
-    programs.jjui.enable = true;
-    programs.fish.shellAliases.lazyjj = "jjui";
-    programs.delta.enableJujutsuIntegration = true;
 
-    programs.delta.enable = true;
+      programs.fish.shellAliases.lazyjj = "jjui";
+
+      programs.fish.interactiveShellInit = ''
+        # for devShells that bring their own git
+        set -gx GIT_CONFIG_GLOBAL ${git.configuration.constructFiles.gitconfig.outPath}
+
+        # lazygit, then cd to wherever it was when it quit
+        function lg
+          set -x LAZYGIT_NEW_DIR_FILE ~/.lazygit/newdir
+          command lazygit $argv
+          if test -f $LAZYGIT_NEW_DIR_FILE
+            cd (cat $LAZYGIT_NEW_DIR_FILE)
+            rm -f $LAZYGIT_NEW_DIR_FILE
+          end
+        end
+      '';
+    };
+
+    # gh stays in HM: its token and extensions don't wrap
+    homeManager = {pkgs, ...}: {
+      programs.gh = {
+        enable = true;
+        extensions = [
+          pkgs.gh-markdown-preview
+          pkgs.gh-poi
+          pkgs.gh-f
+        ];
+      };
+      programs.gh-dash.enable = true;
+    };
   };
 }
