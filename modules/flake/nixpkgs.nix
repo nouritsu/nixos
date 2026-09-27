@@ -5,7 +5,7 @@
 
       overlays = import ../_overlays inputs;
       config.allowUnfreePredicate = pkg:
-        builtins.elem (inputs.nixpkgs.lib.getName pkg) ["spotify"];
+        builtins.elem (inputs.nixpkgs.lib.getName pkg) ["spotify" "splashtop-business" "claude-code"];
     };
   };
 }
