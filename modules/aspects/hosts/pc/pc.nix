@@ -14,6 +14,7 @@
       peripherals.keyboard
       peripherals.monitor
       peripherals.tablet
+      peripherals.razer
 
       # sops-nix age key lives on this host only, so both the secret
       # store and the beszel agent that consumes it are pc-scoped.
