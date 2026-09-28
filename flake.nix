@@ -23,8 +23,8 @@
     # Theming
     catppuccin.url = "github:catppuccin/nix";
     nix-colors.url = "github:misterio77/nix-colors";
-    stylix = {
-      url = "github:danth/stylix";
+    qtengine = {
+      url = "github:kossLAN/qtengine";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

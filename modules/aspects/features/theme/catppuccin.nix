@@ -2,6 +2,14 @@
   den.aspects.catppuccin.nixos = {
     imports = [inputs.catppuccin.nixosModules.catppuccin];
 
+    # what DMS picks icons and cursor from
+    environment.systemPackages = [
+      (pkgs.catppuccin-papirus-folders.override {
+        inherit (config.catppuccin) flavor accent;
+      })
+      catppuccin-mocha-dark-cursors
+    ];
+
     catppuccin = {
       enable = true;
       # Enrol every port by default. Upstream is splitting the two knobs:

@@ -17,7 +17,6 @@
     ];
 
     userSettings = {
-      # ZedMono Nerd Font to match the rest of the system (stylix).
       buffer_font_family = "ZedMono Nerd Font";
       ui_font_family = "ZedMono Nerd Font";
       buffer_font_size = 15;
