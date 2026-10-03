@@ -4,9 +4,6 @@
   ...
 }: {
   den.aspects.nix = {host, ...}: let
-    # nh wants an absolute path to the flake, which only exists relative to an
-    # account. Every host here carries a single one; its home directory is set
-    # by den.batteries.define-user.
     primary = lib.head (lib.attrNames host.users);
   in {
     nixos = {config, ...}: {

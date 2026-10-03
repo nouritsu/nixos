@@ -8,22 +8,18 @@
       graphics.nvidia
       cpu.balanced
 
-      # Desk-bound hardware: Wooting keyboard, DDC/CI monitor control,
-      # drawing tablet. These live here rather than in the desktop role
-      # so portable hosts do not drag them in.
+      # Desk hardware
       peripherals.keyboard
       peripherals.monitor
       peripherals.tablet
       peripherals.razer
 
-      # sops-nix age key lives on this host only, so both the secret
-      # store and the beszel agent that consumes it are pc-scoped.
+      # the sops age key only exists on pc
       secrets
       services.beszel
       nix.serve
       nix.builds-on-laptop
 
-      # Inbound ssh from the laptop.
       ssh.from-laptop
     ];
   };

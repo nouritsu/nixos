@@ -105,9 +105,8 @@
 
     provides.battery.nixos.programs.dms-shell.plugins.batteryOSD.enable = true;
 
-    programs.dms-shell = {
-      enable = true;
-      package = inputs'.dms.packages.default;
+    # hardcodes VPC2004:00 and errors on every start without it
+    provides.ideapad.nixos.programs.dms-shell.plugins.dmsLenovoBatterySettings.enable = true;
 
       plugins = {
         homeAssistantMonitor.enable = true;

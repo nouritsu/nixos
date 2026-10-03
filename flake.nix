@@ -29,7 +29,8 @@
     };
 
     # Software / Firmware
-    cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel";
+    # no follows: these are prebuilt in their own binary caches
+    cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
     lanzaboote.url = "github:nix-community/lanzaboote";
     helix.url = "github:helix-editor/helix/master";
     yazi.url = "github:sxyazi/yazi";

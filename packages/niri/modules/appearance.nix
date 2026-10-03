@@ -1,4 +1,5 @@
 {
+  # only what DMS has no setting for
   flake.nixosModules.wniri-appearance = {...}: {
     settings = {
       prefer-no-csd = _: {};
