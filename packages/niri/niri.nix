@@ -3,22 +3,12 @@
   self,
   ...
 }: let
-  inherit (inputs) wrappers niri;
+  inherit (inputs) wrappers;
 in {
-  perSystem = {
-    pkgs,
-    lib,
-    ...
-  }: {
+  perSystem = {pkgs, ...}: {
     packages.niri = wrappers.wrappers.niri.wrap [
       ({config, ...}: {
         inherit pkgs;
-
-        package = let
-          inherit (pkgs.stdenv.hostPlatform) system;
-        in
-          lib.mkForce
-          niri.packages.${system}.niri-unstable;
 
         passthru.configPath = config."config.kdl".path;
       })
@@ -26,7 +16,7 @@ in {
       self.nixosModules.wniri-keybinds
       self.nixosModules.wniri-appearance
       self.nixosModules.wniri-startup
-      self.nixosModules.wniri-outputs
+      self.nixosModules.wniri-dms
     ];
   };
 }
