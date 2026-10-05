@@ -50,8 +50,16 @@
       };
     };
 
-    productivity.nixos = {pkgs, ...}: {
-      environment.systemPackages = [pkgs.anki pkgs.drawio];
+    productivity.nixos = {
+      self',
+      pkgs,
+      ...
+    }: {
+      environment.systemPackages = [
+        pkgs.anki
+        pkgs.drawio
+        self'.packages.splashtop-business
+      ];
     };
 
     fetchers = {
