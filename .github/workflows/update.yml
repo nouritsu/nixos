@@ -33,7 +33,7 @@ jobs:
           commit-msg: "chore(flake): bump core inputs"
           pr-title: "chore(flake): bump core inputs"
           # PRs opened with GITHUB_TOKEN don't trigger check.yml, hence the PAT
-          token: ${{ secrets.FLAKE_LOCK_TOKEN || github.token }}
+          token: ${{ secrets.FLAKE_LOCK_TOKEN }}
 
   apps:
     name: app inputs
@@ -50,4 +50,4 @@ jobs:
           branch: flake-lock/apps
           commit-msg: "chore(flake): bump app inputs"
           pr-title: "chore(flake): bump app inputs"
-          token: ${{ secrets.FLAKE_LOCK_TOKEN || github.token }}
+          token: ${{ secrets.FLAKE_LOCK_TOKEN }}
