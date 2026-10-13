@@ -1,6 +1,7 @@
 {inputs, ...}: {
   den.aspects.dms = {
     nixos = {
+      config,
       pkgs,
       lib,
       inputs',
@@ -8,11 +9,17 @@
     }: {
       imports = [
         inputs.dms-plugin-registry.nixosModules.default
+        {
+          # per-host edits to the pinned settings, applied in order
+          options.dms'.settingsOverrides = lib.mkOption {
+            type = lib.types.listOf (lib.types.functionTo lib.types.attrs);
+            default = [];
+          };
+        }
       ];
 
       environment.systemPackages = [
         pkgs.wl-clipboard-rs
-        pkgs.qt6.qtwebsockets
         pkgs.xournalpp
         pkgs.dsearch
         pkgs.wl-mirror
@@ -27,9 +34,37 @@
         pkgs.glib # gdbus: smartTimer closes its notifications; gio for About links
       ];
 
-      environment.sessionVariables = {
-        QML2_IMPORT_PATH = "${pkgs.qt6.qtwebsockets}/${pkgs.qt6.qtbase.qtQmlPrefix}";
-        QML_IMPORT_PATH = "${pkgs.qt6.qtwebsockets}/${pkgs.qt6.qtbase.qtQmlPrefix}";
+      # gameControllerBattery, batteryPlus
+      services.upower.enable = true;
+
+      # screenRecorderYS
+      programs.gpu-screen-recorder.enable = true;
+
+      # tabsLauncher: brave reaches tabctl through its extension's native host
+      programs.chromium.extensions = ["baomblllgemcgbignhpbipgiofmjdhpn;https://clients2.google.com/service/update2/crx"];
+
+      # settings.json is read-only; GUI changes come back through DMS's
+      # copy-JSON button into dms-settings.json
+      systemd.user.tmpfiles.rules = [
+        "L+ %h/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/tabctl_mediator.json - - - - ${tabctlHost}"
+        "L+ %h/.config/DankMaterialShell/settings.json - - - - ${settings}"
+        "L+ %h/.config/DankMaterialShell/themes/catppuccin/theme.json - - - - ${inputs.dms-plugin-registry}/themes/catppuccin/theme.json"
+      ];
+
+      # dms only reads plugin settings at start and saves its own copy over later edits
+      systemd.user.services.dms.serviceConfig.ExecStartPre = "-${lib.getExe pinSettings}";
+
+      # dms keeps watching the old link target; restart it when a pin changes
+      system.userActivationScripts.dms-settings = {
+        deps = ["tmpfiles"];
+        text = ''
+          stamp=''${XDG_STATE_HOME:-$HOME/.local/state}/dms-settings-pin
+          if [ "$(cat "$stamp" 2>/dev/null)" != "${settings} ${pinSettings}" ]; then
+            mkdir -p "$(dirname "$stamp")"
+            echo "${settings} ${pinSettings}" > "$stamp"
+            ${pkgs.systemd}/bin/systemctl --user --no-block try-restart dms.service || true
+          fi
+        '';
       };
 
       programs.kdeconnect = {
@@ -52,13 +87,10 @@
           displayMirror.enable = true;
           webSearch.enable = true;
           sshConnections.enable = true;
-          displayOutput.enable = true;
           airQuality.enable = true;
           dockerManager.enable = true;
-          dankActions.enable = true;
           dankLauncherKeys.enable = true;
           wallpaperCarousel.enable = true;
-          displayManager.enable = true;
           handMirror.enable = true;
           ipIndicator.enable = true;
           hiddenBar.enable = true;
@@ -67,7 +99,6 @@
           dankTranslate.enable = true;
           systemMonitorPlus.enable = true;
           nixPackageRunner.enable = true;
-          formatColorPicker.enable = true;
           ocrScanner.enable = true;
           orbitBluetooth.enable = true;
 
@@ -103,10 +134,60 @@
       };
     };
 
+    # the token is a pc-only sops secret
+    provides.home-assistant.nixos = {
+      pkgs,
+      lib,
+      inputs',
+      ...
+    }: {
+      environment.systemPackages = [pkgs.qt6.qtwebsockets];
+
+      # a failed connect ends in Error, never Closed, so reconnect() waits
+      # forever and the widget stays on REST; re-arm once nothing is pending
+      programs.dms-shell.plugins.homeAssistantMonitor = {
+        enable = true;
+        src = lib.mkForce (pkgs.applyPatches {
+          name = "dms-plugin-homeAssistantMonitor";
+          src = inputs'.dms-plugin-registry.packages.homeAssistantMonitor;
+          postPatch = ''
+            substituteInPlace services/WebSocketClient.qml \
+              --replace-fail '_reopenOnClosed = true;' '_reopenOnClosed = true; reopenFallback.restart();' \
+              --replace-fail 'function sendTextMessage(msg) {' 'Timer { id: reopenFallback; interval: 3500; onTriggered: if (socket.status === WebSocket.Error) root._reopenIfPending() }
+
+                function sendTextMessage(msg) {'
+          '';
+        });
+      };
+    };
+
     provides.battery.nixos.programs.dms-shell.plugins.batteryOSD.enable = true;
 
     # hardcodes VPC2004:00 and errors on every start without it
-    provides.ideapad.nixos.programs.dms-shell.plugins.dmsLenovoBatterySettings.enable = true;
+    provides.ideapad.nixos = {lib, ...}: {
+      programs.dms-shell.plugins.dmsLenovoBatterySettings.enable = true;
+
+      # laptop only: Bar 2, right after batteryPlus
+      dms'.settingsOverrides = [
+        (settings: let
+          widget = {
+            id = "dmsLenovoBatterySettings";
+            enabled = true;
+          };
+          place = widgets:
+            lib.concatMap (w: [w] ++ lib.optional (w.id == "batteryPlus") widget)
+            (builtins.filter (w: w.id != widget.id) widgets);
+        in
+          settings
+          // {
+            barConfigs = map (bar:
+              if bar.id == "bar1791747327469"
+              then bar // {leftWidgets = place bar.leftWidgets;}
+              else bar)
+            settings.barConfigs;
+          })
+      ];
+    };
 
     provides.tailscale.nixos = {
       config,
