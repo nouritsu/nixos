@@ -14,6 +14,7 @@
     lock
     core
     brave
+    homelab
     catppuccin
     fonts
     dms.theming
