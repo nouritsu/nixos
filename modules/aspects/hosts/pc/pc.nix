@@ -13,6 +13,8 @@
       peripherals.monitor
       peripherals.tablet
       peripherals.razer
+      dms.razer
+      audio.presets
 
       secrets
       dms.home-assistant

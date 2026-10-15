@@ -5,8 +5,65 @@
       pkgs,
       lib,
       inputs',
+      self',
       ...
-    }: {
+    }: let
+      tabctlHost = pkgs.writeText "tabctl_mediator.json" (builtins.toJSON {
+        name = "tabctl_mediator";
+        description = "TabCtl native messaging host";
+        path = "/run/current-system/sw/bin/tabctl-mediator";
+        type = "stdio";
+        allowed_origins = ["chrome-extension://baomblllgemcgbignhpbipgiofmjdhpn/"];
+      });
+
+      # niri's struts, for columnWidth's working area
+      inherit (self'.packages.niri.configuration.settings.layout) struts;
+
+      settings = (pkgs.formats.json {}).generate "dms-settings.json" (
+        lib.pipe (lib.importJSON ./dms-settings.json) config.dms'.settingsOverrides
+      );
+
+      # every installed plugin is switched on, plus its pinned settings
+      pluginSettings = let
+        pinned = lib.importJSON ./dms-plugin-settings.json;
+        installed = lib.filterAttrs (_: p: p.enable) config.programs.dms-shell.plugins;
+      in
+        (pkgs.formats.json {}).generate "dms-plugin-settings.json"
+        (lib.mapAttrs (id: _: {enabled = true;} // pinned.${id} or {}) installed);
+
+      clipboard = (pkgs.formats.json {}).generate "dms-clipboard.json" {
+        maxHistory = -1;
+        maxEntrySize = 52428800;
+        maxPinned = 25;
+        autoClearDays = 90;
+        clearAtStartup = false;
+        disabled = false;
+      };
+
+      # pinned keys go over the live files; tokens, history and other state stay
+      pinSettings = pkgs.writeShellApplication {
+        name = "dms-pin-settings";
+        runtimeInputs = [pkgs.jq pkgs.coreutils];
+        text = ''
+          dir=''${XDG_CONFIG_HOME:-$HOME/.config}/DankMaterialShell
+          mkdir -p "$dir"
+
+          merge() {
+            [ -f "$1" ] || echo '{}' > "$1"
+            jq -e --slurpfile pin "$2" '. * $pin[0] == .' "$1" > /dev/null && return
+            tmp=$(mktemp "$1.XXXXXX")
+            if jq --slurpfile pin "$2" '. * $pin[0]' "$1" > "$tmp"; then
+              mv "$tmp" "$1"
+            else
+              rm -f "$tmp"
+            fi
+          }
+
+          merge "$dir/plugin_settings.json" ${pluginSettings}
+          merge "$dir/clsettings.json" ${clipboard}
+        '';
+      };
+    in {
       imports = [
         inputs.dms-plugin-registry.nixosModules.default
         {
@@ -29,9 +86,9 @@
         (pkgs.tesseract.override {enableLanguages = ["eng" "deu"];}) # ocrScanner
         pkgs.file # ocrScanner: clipboard scans are gated on `file --mime-type`
         pkgs.librsvg # ocrScanner: rsvg-convert for dropped SVGs
-        pkgs.ddcutil # displayManager: DDC/CI brightness and contrast
-        pkgs.libnotify # notify-send: smartTimer alarms, ipIndicator IP changes
-        pkgs.glib # gdbus: smartTimer closes its notifications; gio for About links
+        pkgs.libnotify # notify-send: ipIndicator IP changes, gameControllerBattery, dankPomodoroTimer
+        pkgs.glib # gdbus: dankKDEConnect image sharing
+        self'.packages.tabctl # tabsLauncher
       ];
 
       # gameControllerBattery, batteryPlus
@@ -79,7 +136,6 @@
         package = inputs'.dms.packages.default;
 
         plugins = {
-          homeAssistantMonitor.enable = true;
           dankKDEConnect.enable = true;
           calculator.enable = true;
           emojiLauncher.enable = true;
@@ -92,15 +148,20 @@
           dankLauncherKeys.enable = true;
           wallpaperCarousel.enable = true;
           handMirror.enable = true;
-          ipIndicator.enable = true;
-          hiddenBar.enable = true;
           recentFiles.enable = true;
           screenshotPlus.enable = true;
           dankTranslate.enable = true;
           systemMonitorPlus.enable = true;
           nixPackageRunner.enable = true;
           ocrScanner.enable = true;
-          orbitBluetooth.enable = true;
+          dankPomodoroTimer.enable = true;
+          takeABreak.enable = true;
+          simpleAudioControl.enable = true;
+          gameControllerBattery.enable = true;
+          batteryPlus.enable = true;
+          screenRecorderYS.enable = true;
+          tabsLauncher.enable = true;
+          windowFx.enable = true;
 
           # these two assume a distro layout; mkForce over the registry's src
 
@@ -118,15 +179,17 @@
             });
           };
 
-          # sounds hardcoded to /usr/share/sounds
-          smartTimer = {
+          # any interface named like a vpn counts, so an idle tailscale0 always
+          # shows; only count it when internet traffic is routed through it
+          ipIndicator = {
             enable = true;
             src = lib.mkForce (pkgs.applyPatches {
-              name = "dms-plugin-smartTimer";
-              src = inputs'.dms-plugin-registry.packages.smartTimer;
+              name = "dms-plugin-ipIndicator";
+              src = inputs'.dms-plugin-registry.packages.ipIndicator;
               postPatch = ''
-                substituteInPlace TimerDaemon.qml TimerSettings.qml \
-                  --replace-fail /usr/share/sounds /run/current-system/sw/share/sounds
+                substituteInPlace IPIndicatorWidget.qml \
+                  --replace-fail "ls /sys/class/net | grep -E '^(" "ip route get 1.1.1.1 | grep -oE 'dev (" \
+                  --replace-fail "cscotun)' | head -1" "cscotun)[^ ]*' | cut -c5- | head -1"
               '';
             });
           };
@@ -162,6 +225,43 @@
     };
 
     provides.battery.nixos.programs.dms-shell.plugins.batteryOSD.enable = true;
+
+    # expects its go cli hand-built inside the per-user plugin dir
+    provides.razer.nixos = {
+      pkgs,
+      lib,
+      inputs',
+      ...
+    }: let
+      src = inputs'.dms-plugin-registry.packages.dankRazer;
+      dankrazer = pkgs.buildGoModule {
+        pname = "dankrazer";
+        inherit (src) version;
+        src = "${src}/dankrazer-cli";
+        vendorHash = "sha256-+oHslT8yKWaToq2zmVJ+NVowPfRGR6R6ajapFywmgo8=";
+        subPackages = ["cmd/dankrazer"];
+        meta.mainProgram = "dankrazer";
+      };
+    in {
+      programs.dms-shell.plugins.dankRazer = {
+        enable = true;
+        src = lib.mkForce (pkgs.applyPatches {
+          name = "dms-plugin-dankRazer";
+          inherit src;
+          postPatch = ''
+            substituteInPlace DankRazerWidget.qml --replace-fail \
+              'pluginService.pluginDirectory + "/dankRazer/dankrazer-cli/dankrazer"' \
+              '"${lib.getExe dankrazer}"'
+            # string/toggle settings have no leftIcon, so the page fails to load
+            substituteInPlace DankRazerSettings.qml \
+              --replace-fail 'leftIcon: "palette"' "" \
+              --replace-fail 'leftIcon: "touch_app"' "" \
+              --replace-fail 'leftIcon: "sync"' "" \
+              --replace-fail 'leftIcon: "bedtime"' ""
+          '';
+        });
+      };
+    };
 
     # hardcodes VPC2004:00 and errors on every start without it
     provides.ideapad.nixos = {lib, ...}: {
