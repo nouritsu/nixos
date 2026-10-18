@@ -2,6 +2,7 @@
   den.aspects.niri = {
     nixos = {
       self',
+      inputs',
       pkgs,
       lib,
       config,
@@ -14,7 +15,7 @@
         package = wniri;
       };
 
-      environment.variables.XDG_SESSION_TYPE = "wayland";
+      environment.systemPackages = [inputs'.niri-cwd.packages.niri-cwd];
 
       # for tools that look in ~/.config/niri (DMS, niri validate)
       systemd.user.tmpfiles.rules = ["L+ %h/.config/niri/config.kdl - - - - ${wniri}/niri-config.kdl"];
@@ -49,6 +50,9 @@
         enable = true;
         configPackages = [niri];
 
+        # handlers start in the session env, not inside steam's or a wrapper's
+        xdgOpenUsePortal = true;
+
         extraPortals = [
           pkgs.xdg-desktop-portal-gtk
           pkgs.xdg-desktop-portal-gnome
@@ -68,6 +72,9 @@
     }: {
       environment.systemPackages = [pkgs.xwayland-satellite];
       services.xserver.enable = lib.mkForce false;
+
+      # defaults to xserver.enable; without caches gtk scans every icon on launch
+      gtk.iconCache.enable = true;
     };
   };
 }

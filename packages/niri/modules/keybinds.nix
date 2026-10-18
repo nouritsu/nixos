@@ -1,10 +1,15 @@
-{self, ...}: {
+{
+  self,
+  inputs,
+  ...
+}: {
   flake.nixosModules.wniri-keybinds = {
     pkgs,
     lib,
     ...
   }: let
     inherit (pkgs.stdenv.hostPlatform) system;
+    cwd = ''"$(${lib.getExe' inputs.niri-cwd.packages.${system}.niri-cwd "niri-cwd"} -d "$HOME")"'';
     woomer = lib.getExe pkgs.woomer;
     wezterm = lib.getExe self.packages.${system}.wezterm;
     scrcpy = lib.getExe self.packages.${system}.scrcpy;
@@ -25,8 +30,10 @@
 
     settings.binds = {
       # Applications
-      "Mod+Return".spawn = wezterm;
+      "Mod+Return".spawn-sh = "${wezterm} start --cwd ${cwd}";
       "Mod+W".spawn = brave;
+      "Mod+E".spawn-sh = "${nautilus} --new-window ${cwd}";
+      "Mod+Shift+E".spawn-sh = "${wezterm} start --cwd ${cwd} -- ${yazi}";
 
       "Mod+D".spawn = "vesktop";
       "Mod+Z".spawn = woomer;
@@ -40,6 +47,8 @@
       "Mod+I".spawn-sh = "dms ipc call settings focusOrToggle";
       "Mod+V".spawn-sh = "dms ipc call clipboard toggle";
       "Mod+Escape".spawn-sh = "dms ipc call powermenu toggle";
+      "Mod+Shift+Escape".spawn-sh = "dms ipc call lock lock";
+      "Ctrl+Shift+Escape".spawn-sh = "dms ipc call processlist focusOrToggle";
       "Mod+Alt+W".spawn-sh = "dms ipc call dankdash wallpaper";
       "Mod+Shift+W".spawn-sh = "dms ipc call wallpaperCarousel toggle";
       "Mod+C".spawn-sh = "dms color pick -a";
@@ -81,10 +90,28 @@
       "Mod+M".maximize-column = {};
       "Mod+Shift+M".expand-column-to-available-width = {};
       "Mod+Tab".toggle-overview = {};
+      "Mod+Shift+V".switch-focus-between-floating-and-tiling = {};
       "Mod+WheelScrollDown".focus-column-left = {};
       "Mod+WheelScrollUp".focus-column-right = {};
       "Mod+Shift+WheelScrollDown".focus-workspace-down = {};
       "Mod+Shift+WheelScrollUp".focus-workspace-up = {};
+
+      # Columns
+      "Mod+BracketLeft".consume-or-expel-window-left = {};
+      "Mod+BracketRight".consume-or-expel-window-right = {};
+      "Mod+Shift+BracketLeft".consume-window-into-column = {};
+      "Mod+Shift+BracketRight".expel-window-from-column = {};
+      "Mod+T".toggle-column-tabbed-display = {};
+      "Mod+Home".focus-column-first = {};
+      "Mod+End".focus-column-last = {};
+
+      # Sizing
+      "Mod+Minus".set-column-width = "-10%";
+      "Mod+Equal".set-column-width = "+10%";
+      "Mod+Shift+Minus".set-window-height = "-10%";
+      "Mod+Shift+Equal".set-window-height = "+10%";
+      "Mod+Shift+R".switch-preset-window-height = {};
+      "Mod+Ctrl+R".reset-window-height = {};
 
       "Mod+H".focus-column-or-monitor-left = {};
       "Mod+left".focus-column-or-monitor-left = {};
