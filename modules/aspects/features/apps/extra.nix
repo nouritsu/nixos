@@ -4,6 +4,7 @@
       nixos = {
         self',
         pkgs,
+        lib,
         ...
       }: {
         environment.systemPackages = [
@@ -12,7 +13,31 @@
           pkgs.eog
           self'.packages.mpv
           self'.packages.spotify
+          self'.packages.moonfin
         ];
+
+        # brave and okular claim some of these otherwise
+        xdg.mime.defaultApplications = lib.genAttrs [
+          "image/jpeg"
+          "image/pjpeg"
+          "image/png"
+          "image/gif"
+          "image/webp"
+          "image/avif"
+          "image/heic"
+          "image/jxl"
+          "image/bmp"
+          "image/x-bmp"
+          "image/tiff"
+          "image/svg+xml"
+        ] (_: "org.gnome.eog.desktop");
+
+        # v4l2loopback only; obs itself is installed above
+        programs.obs-studio = {
+          enable = true;
+          package = null;
+          enableVirtualCamera = true;
+        };
       };
     };
 
