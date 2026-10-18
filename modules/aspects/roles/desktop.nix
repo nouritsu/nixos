@@ -12,8 +12,9 @@
     dms
     dms.tailscale
     greeter
-    lock
+    user-dirs
     core
+    nautilus
     brave
     homelab
     catppuccin
