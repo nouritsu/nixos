@@ -40,30 +40,8 @@
       gtk.icon.enable = true;
       grub.enable = true;
     };
-  };
 
-  den.aspects.catppuccin.homeManager = {
-    imports = [inputs.catppuccin.homeModules.catppuccin];
-
-    catppuccin = {
-      enable = true;
-      autoEnable = true;
-      cache.enable = true;
-      flavor = "mocha";
-      accent = "mauve";
-
-      bat.enable = true;
-      # Floorp carries its own catppuccin add-on
-      firefox.enable = false;
-      fish.enable = true;
-      fzf.enable = true;
-      hyprlock.enable = false;
-      lsd.enable = true;
-      wezterm.enable = true;
-      zed = {
-        enable = true;
-        icons.enable = true;
-      };
-    };
+    # glow and other glamour tuis
+    environment.sessionVariables.GLAMOUR_STYLE = "${config.catppuccin.sources.glamour}/catppuccin-${config.catppuccin.flavor}.json";
   };
 }

@@ -15,7 +15,6 @@
       pkgs.fishPlugins.colored-man-pages
       pkgs.fishPlugins.fzf-fish
     ];
-  };
 
     # native fish instead of fenv spawning bash at every start
     programs.fish.useBabelfish = true;
@@ -23,10 +22,7 @@
     # apropos and man -k; indexed by a service, not on every rebuild
     documentation.man.cache = {
       enable = true;
-      generateCaches = true;
+      generateAtRuntime = true;
     };
-
-    # keep on: its config.fish sources hm-session-vars for the niri session
-    programs.fish.enable = true;
   };
 }
