@@ -8,7 +8,7 @@
       }: {
         environment.systemPackages = [
           pkgs.ffmpeg-full
-          pkgs.obs-studio
+          self'.packages.obs-studio
           pkgs.eog
           self'.packages.mpv
           self'.packages.spotify
@@ -124,11 +124,15 @@
 
     chat = {
       includes = [(den.batteries.unfree ["slack"])];
-      nixos = {pkgs, ...}: {
+      nixos = {
+        self',
+        pkgs,
+        ...
+      }: {
         environment.systemPackages = [
           pkgs.telegram-desktop
           pkgs.whatsapp-electron
-          pkgs.vesktop
+          self'.packages.vesktop
           pkgs.teams-for-linux
           pkgs.slack
         ];
@@ -137,7 +141,12 @@
 
     gaming = {
       includes = [(den.batteries.unfree ["steam" "steam-unwrapped" "steam-original" "steam-run"])];
-      nixos = {pkgs, ...}: {
+      nixos = {
+        self',
+        pkgs,
+        inputs',
+        ...
+      }: {
         programs.steam = {
           enable = true;
           extest.enable = true;
@@ -150,18 +159,20 @@
           pkgs.protonup-ng
         ];
 
-        environment.variables = {
-          STEAM_EXTRA_COMPAT_TOOLS_PATHS = "$HOME/.steam/root/compatibilitytools.d";
-        };
+        environment.sessionVariables.MANGOHUD_CONFIGFILE = "${inputs'.catppuccin.packages.mangohud}/mocha/MangoHud.conf";
       };
     };
 
-    game-mods.nixos = {pkgs, ...}: {
+    game-mods.nixos = {
+      self',
+      pkgs,
+      ...
+    }: {
       environment.systemPackages = [
         pkgs.lumafly
         pkgs.r2modman
         pkgs.satisfactorymodmanager
-        pkgs.prismlauncher
+        self'.packages.prismlauncher
         pkgs.deadlock-mod-manager
       ];
     };
