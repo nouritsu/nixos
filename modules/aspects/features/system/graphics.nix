@@ -19,8 +19,14 @@
       nixos = {
         services.xserver.videoDrivers = ["nvidia"];
         hardware.nvidia = {
-          open = false;
+          open = true;
           modesetting.enable = true;
+        };
+
+        # cudaSupport builds; cache.nixos.org has none
+        nix.settings = {
+          extra-substituters = ["https://cache.nixos-cuda.org"];
+          trusted-public-keys = ["cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M="];
         };
 
         # DXVK has no state cache, so keep NVIDIA's shader cache big and uncleaned
@@ -28,6 +34,12 @@
           __GL_SHADER_DISK_CACHE = "1";
           __GL_SHADER_DISK_CACHE_SIZE = "10737418240"; # 10 GiB
           __GL_SHADER_DISK_CACHE_SKIP_CLEANUP = "1";
+
+          # gtk4's vulkan renderer is slow to start here
+          GSK_RENDERER = "gl";
+
+          # skip probing every mesa icd; both arches so 32-bit proton keeps vulkan
+          VK_DRIVER_FILES = "/run/opengl-driver/share/vulkan/icd.d/nvidia_icd.json:/run/opengl-driver-32/share/vulkan/icd.d/nvidia_icd.json";
         };
       };
     };
