@@ -6,15 +6,25 @@
   }: let
     starship = self'.packages.starship;
     settings = starship.configuration.constructFiles."starship.toml".outPath;
+    sshSettings = starship.configuration.constructFiles."starship-ssh.toml".outPath;
   in {
     environment.systemPackages = [starship];
 
     # starship init bakes in the unwrapped binary, so export its config here
-    # mkAfter: any-nix-shell would clobber fish_right_prompt
-    programs.fish.interactiveShellInit = lib.mkAfter ''
+    programs.fish.interactiveShellInit = ''
       if test "$TERM" != dumb
-        set -gx STARSHIP_CONFIG ${settings}
+        if set -q SSH_CONNECTION
+          set -gx STARSHIP_CONFIG ${sshSettings}
+        else
+          set -gx STARSHIP_CONFIG ${settings}
+        end
+
+        function starship_transient_prompt_func
+          ${lib.getExe starship} module character
+        end
+
         ${lib.getExe starship} init fish | source
+        enable_transience
       end
     '';
   };

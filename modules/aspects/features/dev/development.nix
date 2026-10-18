@@ -36,23 +36,13 @@
           pkgs.pixelflasher
           self'.packages.scrcpy
         ];
-      };
 
-      c.nixos = {
-        pkgs,
-        lib,
-        ...
-      }: {
-        environment.systemPackages = [
-          pkgs.gcc
-          pkgs.lldb
-          pkgs.clang-tools # clangd, used by Zed and other editors
-          (pkgs.writeShellScriptBin "cling" ''
-            exec ${lib.getExe pkgs.cling} -Wno-unknown-attributes "$@"
-          '')
-        ];
-
-        programs.fish.shellAliases.repl-c = "cling";
+        programs.fish.shellAbbrs = {
+          ads = "adb shell";
+          adi = "adb install";
+          adp = "adb push";
+          adc = "adb connect";
+        };
       };
 
       embedded = {

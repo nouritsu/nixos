@@ -28,6 +28,8 @@
       programs.fish.shellAbbrs = {
         oc = "opencode";
         c = "claude";
+        cr = "claude --resume";
+        cn = "claude --continue";
       };
       programs.fish.shellAliases.claude-usage = "ccusage";
     };

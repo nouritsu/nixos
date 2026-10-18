@@ -21,6 +21,8 @@
         end
         rm -f -- "$tmp"
       end
+
+      bind ctrl-o 'yazi_wrapper; commandline -f repaint'
     '';
   };
 }
