@@ -163,7 +163,19 @@
           tabsLauncher.enable = true;
           windowFx.enable = true;
 
-          # these two assume a distro layout; mkForce over the registry's src
+          # local: the focused column's width as a % of the screen
+          columnWidth = {
+            enable = true;
+            src = pkgs.applyPatches {
+              name = "dms-plugin-columnWidth";
+              src = ./dms-column-width;
+              postPatch = ''
+                substituteInPlace ColumnWidthWidget.qml --replace-fail @struts@ ${toString (struts.left + struts.right)}
+              '';
+            };
+          };
+
+          # patched: mkForce over the registry's src
 
           # script path assumed the per-user plugin dir
           claudeCodeUsage = {
