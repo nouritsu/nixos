@@ -5,4 +5,6 @@ inputs: [
   (import ./xwayland-satellite.nix)
   inputs.cachyos-kernel.overlays.pinned
   inputs.niri.overlays.default
+  (import ./niri.nix)
+  inputs.millennium.overlays.default
 ]
