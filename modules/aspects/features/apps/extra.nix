@@ -1,7 +1,6 @@
 {den, ...}: {
   den.aspects.extra.provides = {
     media = {
-      includes = [(den.batteries.unfree ["spotify"])];
       nixos = {
         self',
         pkgs,

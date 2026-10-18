@@ -7,8 +7,6 @@
   }: {
     environment.systemPackages = [
       self'.packages.wezterm
-      self'.packages.floorp
-      pkgs.nautilus
 
       # fish comes from den battery
       pkgs.fish-lsp
