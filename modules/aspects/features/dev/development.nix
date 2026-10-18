@@ -100,25 +100,9 @@
       python.nixos = {pkgs, ...}: {
         environment.systemPackages = [
           pkgs.python3
-          pkgs.black
-          pkgs.ruff
         ];
 
         programs.fish.shellAliases.repl-py = "python3";
-      };
-
-      rust.nixos = {pkgs, ...}: {
-        environment.systemPackages = [
-          pkgs.rustup
-          pkgs.bacon
-          pkgs.evcxr
-        ];
-
-        programs.fish.shellAliases.repl-rs = "evcxr";
-
-        programs.fish.interactiveShellInit = ''
-          fish_add_path ~/.cargo/bin
-        '';
       };
     };
   };
