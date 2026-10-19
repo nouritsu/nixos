@@ -84,6 +84,7 @@
       nixos = {
         config,
         pkgs,
+        lib,
         ...
       }: let
         # 3.12.4 lacks the Viper V4 Pro; openrazer#2751 until a release has it
@@ -94,7 +95,11 @@
           hash = "sha256-6l1P7Cmx9FwhXAnIss6K7Wpt4nkg861WrgItViD+8Hs=";
         };
         version = "3.12.4-unstable-2026-07-12";
+        nixpkgsVersion = pkgs.python3Packages.openrazer-daemon.version;
+        inherit (config.boot.kernelPackages) kernel;
       in {
+        warnings = lib.optional (lib.versionOlder "3.12.4" nixpkgsVersion) "nixpkgs has openrazer ${nixpkgsVersion}; drop the git pin if it supports the Viper V4 Pro";
+
         hardware.openrazer = {
           enable = true;
           packages.kernel = config.boot.kernelPackages.openrazer.overrideAttrs {
