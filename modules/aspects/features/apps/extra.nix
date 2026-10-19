@@ -41,18 +41,16 @@
       };
     };
 
-    pdf.nixos = {
-      self',
-      pkgs,
-      ...
-    }: {
+    pdf.nixos = {pkgs, ...}: {
       environment.systemPackages = [
         pkgs.pdftk
         pkgs.poppler-utils
         pkgs.pdfchain
-        pkgs.kdePackages.okular
-        self'.packages.zathura
+        pkgs.papers
       ];
+
+      # brave, xournalpp and onlyoffice claim it otherwise
+      xdg.mime.defaultApplications."application/pdf" = "org.gnome.Papers.desktop";
     };
 
     download.nixos = {pkgs, ...}: {
