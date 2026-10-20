@@ -68,13 +68,12 @@
     };
   in {
     plugins = {
-      inherit yatline path-from-root;
+      inherit yatline path-from-root duckdb;
       yatline-catppuccin = pkgs.yaziPlugins.yatline-catppuccin;
       piper = pkgs.yaziPlugins.piper;
       ouch = pkgs.yaziPlugins.ouch;
       mediainfo = pkgs.yaziPlugins.mediainfo;
       wl-clipboard = pkgs.yaziPlugins.wl-clipboard;
-      duckdb = pkgs.yaziPlugins.duckdb;
       full-border = pkgs.yaziPlugins.full-border;
       git = pkgs.yaziPlugins.git;
       zoom = "${bundle}/zoom.yazi";
