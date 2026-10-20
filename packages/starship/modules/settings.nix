@@ -36,13 +36,14 @@
           "70" = "󰂀";
           "80" = "󰂁";
           "90" = "󰂂";
+          "100" = symbols.battery.full;
         };
 
         git_branch = " ";
 
         cpu_usage = "󰻠 ";
 
-        memory_usage = " ";
+        memory_usage = "  ";
 
         load = "󰓅 ";
 
@@ -92,6 +93,7 @@
           "70" = "bold green";
           "80" = "bold green";
           "90" = "bold bright-green";
+          "100" = "bold bright-green";
         };
 
         git_branch = "bold mauve";
@@ -106,7 +108,7 @@
         jobs = "bold mauve";
 
         cpu_usage = {
-          cpu = "bold peach";
+          cpu = "bold sapphire";
           percent = "bold black";
         };
 
@@ -149,12 +151,12 @@
         "[╭](${colors.separator})"
         "${surround_bracket "$username@$hostname" colors.separator 0} "
         "$time"
+        "$battery"
         "$directory"
         "$git_metrics"
         "$git_branch"
         "$git_status"
         "$cmd_duration"
-        "$battery"
         "$line_break"
         "[╰](${colors.separator})"
         "\${custom.cpu}"
@@ -194,6 +196,7 @@
             70
             80
             90
+            100
           ];
       };
 
