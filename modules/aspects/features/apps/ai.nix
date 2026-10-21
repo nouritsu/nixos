@@ -5,12 +5,49 @@
       self',
       inputs',
       pkgs,
+      lib,
       ...
-    }: {
+    }: let
+      desktop = inputs'.claude-desktop.packages.claude-desktop;
+
+      # chat tab servers; the app rewrites this file, so they merge in at launch
+      chatMcp = pkgs.writeText "claude-desktop-mcp.json" (builtins.toJSON {
+        mcpServers = {
+          nixos.command = lib.getExe pkgs.mcp-nixos;
+          context7.command = lib.getExe' pkgs.context7-mcp "context7-mcp";
+        };
+      });
+
+      # no meta: its unfree licence would trip this pkgs' check, the flake allows it
+      claude-desktop = pkgs.symlinkJoin {
+        inherit (desktop) name;
+        paths = [
+          (pkgs.writeShellApplication {
+            name = "claude-desktop";
+            runtimeInputs = [pkgs.jq pkgs.coreutils];
+            text = ''
+              conf=''${XDG_CONFIG_HOME:-$HOME/.config}/Claude/claude_desktop_config.json
+              mkdir -p "$(dirname "$conf")"
+              [ -f "$conf" ] || echo '{}' > "$conf"
+              if ! jq -e --slurpfile pin ${chatMcp} '. * $pin[0] == .' "$conf" > /dev/null; then
+                tmp=$(mktemp "$conf.XXXXXX")
+                if jq --slurpfile pin ${chatMcp} '. * $pin[0]' "$conf" > "$tmp"; then
+                  mv "$tmp" "$conf"
+                else
+                  rm -f "$tmp"
+                fi
+              fi
+              exec ${desktop}/bin/claude-desktop "$@"
+            '';
+          })
+          desktop
+        ];
+      };
+    in {
       environment.systemPackages = [
         self'.packages.opencode
         self'.packages.claude-code
-        inputs'.claude-desktop.packages.claude-desktop
+        claude-desktop
         pkgs.code-cursor
 
         pkgs.ccusage
@@ -29,7 +66,19 @@
         builtins.toJSON {
           inherit (settings) attribution permissions;
           hooks = {inherit (settings.hooks) PostToolUse;};
+
+          # read in place through the /etc link, so a switch updates it
+          extraKnownMarketplaces.nixos-config.source = {
+            source = "directory";
+            path = "/etc/claude-code/marketplace";
+          };
+          enabledPlugins = {
+            "nix@nixos-config" = true;
+            "qt-development-skills@claude-plugins-official" = true;
+          };
         };
+
+      environment.etc."claude-code/marketplace".source = self'.packages.claude-marketplace;
 
       # claude-mergetool install git can't write the wrapped gitconfig
       programs.git = {
@@ -47,45 +96,6 @@
         cn = "claude --continue";
       };
       programs.fish.shellAliases.claude-usage = "ccusage";
-    };
-
-    provides.local = {
-      includes = [(den.batteries.unfree ["cuda_cccl" "cuda_cudart" "cuda_nvcc" "cuda_nvrtc" "libcublas"])];
-      nixos = {
-        pkgs,
-        lib,
-        ...
-      }: let
-        llama-server = lib.getExe' (pkgs.llama-cpp.override {cudaSupport = true;}) "llama-server";
-
-        # --fit splits layers and moe experts between vram and ram
-        serve = model: ctx:
-          toString [
-            llama-server
-            "--port \${PORT}"
-            "-hf ${model}"
-            "--no-mmproj"
-            "--ctx-size ${toString ctx}"
-            # qwen's thinking-mode sampling
-            "--temp 0.6 --top-p 0.95 --top-k 20 --min-p 0"
-          ];
-      in {
-        # one model at a time, loaded on request, unloaded after 5 idle minutes
-        services.llama-swap = {
-          enable = true;
-          listenAddress = "127.0.0.1";
-          settings = {
-            # first load downloads the gguf before /health answers
-            healthCheckTimeout = 3600;
-            globalTTL = 300;
-
-            models = {
-              "qwen3.6-35b-a3b".cmd = serve "unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q4_K_XL" 65536;
-              "qwen3.5-9b".cmd = serve "unsloth/Qwen3.5-9B-GGUF:UD-Q4_K_XL" 32768;
-            };
-          };
-        };
-      };
     };
   };
 }

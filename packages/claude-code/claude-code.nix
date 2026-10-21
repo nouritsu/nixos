@@ -1,5 +1,27 @@
-{inputs, ...}: let
-  inherit (inputs) wrappers;
+{
+  self,
+  inputs,
+  ...
+}: let
+  inherit (inputs) wrappers nix-colors;
+  inherit (nix-colors.colorSchemes.catppuccin-mocha) palette;
+
+  c = slot: "#${palette.${slot}}";
+  base = c "base00";
+  mantle = c "base01";
+  surface0 = c "base02";
+  surface1 = c "base03";
+  surface2 = c "base04";
+  text = c "base05";
+  lavender = c "base07";
+  red = c "base08";
+  peach = c "base09";
+  yellow = c "base0A";
+  green = c "base0B";
+  teal = c "base0C";
+  blue = c "base0D";
+  mauve = c "base0E";
+  flamingo = c "base0F";
 in {
   perSystem = {
     pkgs,
@@ -67,11 +89,128 @@ in {
       '';
     };
 
-    # LSP servers from the store, not PATH
+    # sops token as a bearer; home assistant's mcp server takes long-lived tokens
+    ha-headers = pkgs.writeShellApplication {
+      name = "claude-ha-headers";
+      runtimeInputs = [pkgs.jq];
+      text = ''
+        jq -n --rawfile token /run/secrets/ha-claude-token \
+          '{Authorization: "Bearer \($token | rtrimstr("\n"))"}'
+      '';
+    };
+
+    powerline-theme = pkgs.writeText "claude-powerline.json" (builtins.toJSON {
+      theme = "custom";
+      colors.custom = {
+        directory = {
+          bg = mauve;
+          fg = base;
+        };
+        git = {
+          bg = surface0;
+          fg = green;
+        };
+        model = {
+          bg = mantle;
+          fg = lavender;
+        };
+        session = {
+          bg = surface0;
+          fg = teal;
+        };
+        block = {
+          bg = surface1;
+          fg = blue;
+        };
+        today = {
+          bg = mantle;
+          fg = teal;
+        };
+        month = {
+          bg = surface0;
+          fg = yellow;
+        };
+        tmux = {
+          bg = mantle;
+          fg = green;
+        };
+        context = {
+          bg = surface1;
+          fg = text;
+        };
+        contextWarning = {
+          bg = peach;
+          fg = base;
+        };
+        contextCritical = {
+          bg = red;
+          fg = base;
+        };
+        metrics = {
+          bg = surface2;
+          fg = text;
+        };
+        version = {
+          bg = surface0;
+          fg = mauve;
+        };
+        env = {
+          bg = mantle;
+          fg = flamingo;
+        };
+        weekly = {
+          bg = surface0;
+          fg = blue;
+        };
+        agent = {
+          bg = surface1;
+          fg = mauve;
+        };
+        thinking = {
+          bg = surface0;
+          fg = mauve;
+        };
+        cacheTimer = {
+          bg = mantle;
+          fg = green;
+        };
+        outputStyle = {
+          bg = surface0;
+          fg = teal;
+        };
+      };
+    });
+
+    # LSP and MCP servers from the store, not PATH
     # one server per extension, so .nix gets nil
-    lsp-plugin = pkgs.writeTextDir ".claude-plugin/plugin.json" (builtins.toJSON {
-      name = "nix-lsp";
-      description = "Language servers pinned by the NixOS config";
+    plugin = {
+      name = "nix";
+      description = "Language and MCP servers pinned by the NixOS config";
+
+      mcpServers = {
+        nixos = {
+          type = "stdio";
+          command = lib.getExe pkgs.mcp-nixos;
+        };
+        context7 = {
+          type = "http";
+          url = "https://mcp.context7.com/mcp";
+        };
+        godot = {
+          type = "stdio";
+          command = lib.getExe self'.packages.godot-mcp;
+        };
+        devenv = {
+          type = "http";
+          url = "https://mcp.devenv.sh";
+        };
+        home-assistant = {
+          type = "http";
+          url = "https://home.nouritsu.com/api/mcp";
+          headersHelper = lib.getExe ha-headers;
+        };
+      };
+
       lspServers = {
         nil = {
           command = lib.getExe pkgs.nil;
@@ -100,18 +239,67 @@ in {
           extensionToLanguage.".gd" = "gdscript";
           startupTimeout = 300000;
         };
+        basedpyright = {
+          command = lib.getExe' pkgs.basedpyright "basedpyright-langserver";
+          args = ["--stdio"];
+          extensionToLanguage = {
+            ".py" = "python";
+            ".pyi" = "python";
+          };
+        };
+        typescript = {
+          command = lib.getExe pkgs.typescript-language-server;
+          args = ["--stdio"];
+          extensionToLanguage = {
+            ".ts" = "typescript";
+            ".mts" = "typescript";
+            ".cts" = "typescript";
+            ".tsx" = "typescriptreact";
+            ".js" = "javascript";
+            ".mjs" = "javascript";
+            ".cjs" = "javascript";
+            ".jsx" = "javascriptreact";
+          };
+        };
+        svelte = {
+          command = self.lib.onDemand pkgs "svelte-language-server" "svelteserver";
+          args = ["--stdio"];
+          extensionToLanguage.".svelte" = "svelte";
+        };
+        lua = {
+          command = lib.getExe pkgs.lua-language-server;
+          extensionToLanguage.".lua" = "lua";
+        };
+        qmlls = {
+          command = self.lib.onDemand pkgs "kdePackages.qtdeclarative" "qmlls";
+          extensionToLanguage.".qml" = "qml";
+        };
       };
-    });
-
-    # skill for handing edits to the local model
-    local-plugin = pkgs.runCommand "local-llm-plugin" {} ''
-      install -Dm644 ${pkgs.writeText "plugin.json" (builtins.toJSON {
-        name = "local-llm";
-        description = "Delegate edits to the local model through opencode";
-      })} $out/.claude-plugin/plugin.json
-      install -Dm644 ${./skills/delegate-local/SKILL.md} $out/skills/delegate-local/SKILL.md
-    '';
+    };
   in {
+    # a directory marketplace so managed settings can enable the plugin in every
+    # claude, the desktop app's included; version changes with the contents
+    packages.claude-marketplace = let
+      marketplace = pkgs.writeText "marketplace.json" (builtins.toJSON {
+        name = "nixos-config";
+        owner.name = "nouritsu";
+        plugins = [
+          {
+            inherit (plugin) name description;
+            source = "./plugins/${plugin.name}";
+          }
+        ];
+      });
+      manifest = pkgs.writeText "plugin.json" (builtins.toJSON (plugin
+        // {
+          version = builtins.substring 0 12 (builtins.hashString "sha256" (builtins.toJSON plugin));
+        }));
+    in
+      pkgs.runCommand "claude-marketplace" {} ''
+        install -Dm644 ${marketplace} $out/.claude-plugin/marketplace.json
+        install -Dm644 ${manifest} $out/plugins/${plugin.name}/.claude-plugin/plugin.json
+      '';
+
     # --settings outranks ~/.claude/settings.json; model, effort, tui and
     # plugins stay out so /model, /effort and /config still stick
     packages.claude-code = wrappers.wrappers.claude-code.wrap [
@@ -120,23 +308,6 @@ in {
         package = pkgs.claude-code;
       }
       {
-        mcpConfig = {
-          nixos = {
-            type = "stdio";
-            command = lib.getExe pkgs.mcp-nixos;
-          };
-          context7 = {
-            type = "http";
-            url = "https://mcp.context7.com/mcp";
-          };
-          godot = {
-            type = "stdio";
-            command = lib.getExe self'.packages.godot-mcp;
-          };
-        };
-
-        pluginDirs = [lsp-plugin local-plugin];
-
         # remote control rejects the wrapper's flags and needs nonessential traffic
         runShell = [
           ''
@@ -157,10 +328,11 @@ in {
 
           statusLine = {
             type = "command";
-            command = "${lib.getExe pkgs.claude-powerline} --theme=tokyo-night --style=powerline";
+            command = "${lib.getExe pkgs.claude-powerline} --config=${powerline-theme} --style=powerline";
           };
 
           # read-only, so safe in every project; merges with project allows
+          # home assistant stays out, its tools switch real devices
           permissions.allow = [
             "Bash(nix eval *)"
             "Bash(nix flake show *)"
@@ -168,15 +340,13 @@ in {
             "Bash(journalctl *)"
             "Bash(gdscript-formatter lint *)"
             "Bash(gdscript-formatter --check *)"
-            "mcp__nixos"
-            "mcp__context7"
-            "mcp__godot__get_godot_version"
-            "mcp__godot__list_projects"
-            "mcp__godot__get_project_info"
-            "mcp__godot__get_debug_output"
-
-            # not read-only, but the local agent can only edit inside --dir
-            "Bash(opencode run --agent local *)"
+            "mcp__plugin_nix_nixos"
+            "mcp__plugin_nix_context7"
+            "mcp__plugin_nix_devenv"
+            "mcp__plugin_nix_godot__get_godot_version"
+            "mcp__plugin_nix_godot__list_projects"
+            "mcp__plugin_nix_godot__get_project_info"
+            "mcp__plugin_nix_godot__get_debug_output"
           ];
 
           hooks = {
