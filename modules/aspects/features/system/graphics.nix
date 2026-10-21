@@ -54,6 +54,9 @@
     };
 
     provides.intel.nixos = {pkgs, ...}: {
+      # early KMS for the boot splash; udev loads whichever matches the gpu
+      boot.initrd.availableKernelModules = ["i915" "xe"];
+
       environment.sessionVariables.LIBVA_DRIVER_NAME = "iHD";
 
       hardware.graphics.extraPackages = [

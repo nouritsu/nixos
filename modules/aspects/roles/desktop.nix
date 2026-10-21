@@ -21,6 +21,7 @@
     catppuccin
     fonts
     dms.theming
+    plymouth
     extra.fetchers
     extra.tui-viewers
   ];
