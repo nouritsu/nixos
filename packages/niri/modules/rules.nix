@@ -21,5 +21,19 @@
         open-fullscreen = true;
       }
     ];
+
+    settings.layer-rules = [
+      {
+        matches = [{namespace = "^wlr_which_key$";}];
+        shadow.on = _: {};
+        geometry-corner-radius = 12;
+      }
+
+      # live halves capture the screen under shatterlock, not shatterlock itself
+      {
+        matches = [{namespace = "^shatterlock$";}];
+        hide-from-own-capture = true;
+      }
+    ];
   };
 }
