@@ -63,7 +63,7 @@
           "Color scheme" = "Dark";
           # mauve in Catppuccin Mocha
           "Accent color" = "Purple";
-          "Font" = "Adwaita";
+          "Font" = "System";
           "Hide games list" = "no";
           "Login QR code" = "Show";
           "Pointer cursor" = "no";
@@ -87,6 +87,8 @@
               dst=$2/$(basename "$link")
               # .star plugins are never unpacked or written to
               if [ -f "$src" ]; then
+                # drop our copy from before it became a .star
+                [ -f "''${dst%.star}/.nix-source" ] && rm -rf "''${dst%.star}"
                 ln -sf "$src" "$dst"
                 continue
               fi
