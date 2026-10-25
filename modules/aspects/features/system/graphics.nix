@@ -12,7 +12,6 @@
         (den.batteries.unfree [
           "nvidia-x11"
           "nvidia-kernel-modules"
-          "nvidia-settings"
           "nvidia-persistenced"
         ])
       ];
@@ -21,6 +20,7 @@
         hardware.nvidia = {
           open = true;
           modesetting.enable = true;
+          nvidiaSettings = false;
         };
 
         # by license: cuda redists get renamed between releases

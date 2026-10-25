@@ -131,10 +131,18 @@
 
         hardware.openrazer = {
           enable = true;
-          packages.kernel = config.boot.kernelPackages.openrazer.overrideAttrs {
+          packages.kernel = config.boot.kernelPackages.openrazer.overrideAttrs (old: {
             inherit src;
-            version = "${version}-${config.boot.kernelPackages.kernel.version}";
-          };
+            version = "${version}-${kernel.version}";
+
+            # a WARN path from hid.h kept the 1.3 GB kernel dev tree alive
+            nativeBuildInputs = old.nativeBuildInputs ++ [pkgs.removeReferencesTo];
+            postInstall =
+              (old.postInstall or "")
+              + ''
+                remove-references-to -t ${kernel.dev} $out/lib/modules/*/kernel/drivers/hid/*.ko
+              '';
+          });
           packages.daemon = pkgs.python3Packages.openrazer-daemon.overridePythonAttrs {
             inherit src version;
           };

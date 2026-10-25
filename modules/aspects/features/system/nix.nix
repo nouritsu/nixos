@@ -12,6 +12,9 @@
       ...
     }: let
       substituters = config.nh'.substituters;
+
+      # /bin only, so not-found lookups take ms instead of seconds
+      nix-index-small = (import inputs.nix-index-database {inherit pkgs;}).nix-index-with-small-db;
     in {
       imports = [
         inputs.nix-index-database.nixosModules.default
@@ -27,12 +30,14 @@
       programs.nix-ld.enable = true;
       programs.nix-index-database.comma.enable = true;
 
+      # full db stays for nix-locate
+      programs.nix-index.enableFishIntegration = false;
+      programs.nix-index.enableBashIntegration = false;
+      programs.bash.interactiveShellInit = "source ${nix-index-small}/etc/profile.d/command-not-found.sh";
+
       programs.nh = {
         enable = true;
         flake = "${config.users.users.${primary}.home}/.config/nixos";
-
-        clean.enable = true;
-        clean.extraArgs = "--keep 5 --keep-since 7d";
 
         package = lib.mkIf (substituters != []) (pkgs.symlinkJoin {
           inherit (pkgs.nh) name meta;
@@ -62,23 +67,7 @@
       # not in substituters: devshells and every other nix command would query them
       nix.settings.trusted-substituters = substituters;
 
-      programs.fish.shellAliases.conf = "$EDITOR $NH_FLAKE";
-      programs.fish.shellAbbrs = {
-        nhrb = "nh os boot";
-        nhrs = "nh os switch";
-        nhrt = "nh os test";
-        nhca = "nh clean all";
-        nhs = "nh search";
-
-        nd = "nix develop";
-        nb = "nix build";
-        nfu = "nix flake update";
-        nfs = "nix flake show";
-      };
-
       programs.fish.interactiveShellInit = ''
-        abbr -a nr --set-cursor 'nix run nixpkgs#%'
-
         # nix-shell -p, but nix shell
         function nsp
           nix shell (string replace -r '^' 'nixpkgs#' -- $argv)
