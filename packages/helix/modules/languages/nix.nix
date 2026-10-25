@@ -8,7 +8,7 @@
     nil = lib.getExe pkgs.nil;
     alejandra = lib.getExe pkgs.alejandra;
 
-    # option completion from this host's config
+    # option and package completion from this host's config
     host = ''
       let
         flake = builtins.getFlake (builtins.getEnv "NH_FLAKE");
@@ -20,6 +20,7 @@
     languages.language-server = {
       nixd = {
         command = nixd;
+        config.nixd.nixpkgs.expr = "(${host}).pkgs";
         config.nixd.options = {
           nixos.expr = "(${host}).options";
         };
@@ -33,7 +34,14 @@
         scope = "source.nix";
         injection-regex = "nix";
         file-types = ["nix"];
-        language-servers = ["nixd" "nil"];
+        language-servers = [
+          "nixd"
+          {
+            name = "nil";
+            except-features = ["completion"];
+          }
+          "scls"
+        ];
 
         formatter.command = alejandra;
         auto-format = true;

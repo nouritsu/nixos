@@ -221,7 +221,7 @@ in {
           extensionToLanguage.".rs" = "rust";
         };
         clangd = {
-          command = "${pkgs.clang-tools}/bin/clangd";
+          command = self.lib.onDemand pkgs "clang-tools" "clangd";
           args = ["--background-index"];
           extensionToLanguage = {
             ".c" = "c";
