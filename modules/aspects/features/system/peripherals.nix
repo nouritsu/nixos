@@ -139,8 +139,6 @@
             inherit src version;
           };
         };
-
-        environment.systemPackages = [pkgs.polychromatic];
       };
 
       user.extraGroups = ["openrazer"];

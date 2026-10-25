@@ -13,7 +13,6 @@
           pkgs.eog
           self'.packages.mpv
           self'.packages.spotify
-          self'.packages.moonfin
         ];
 
         which-key'.menu.m.submenu = {
@@ -292,9 +291,7 @@
       ...
     }: {
       environment.systemPackages = [
-        pkgs.lumafly
         pkgs.r2modman
-        pkgs.satisfactorymodmanager
         self'.packages.prismlauncher
         pkgs.deadlock-mod-manager
       ];

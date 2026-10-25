@@ -17,10 +17,6 @@
           godot
           self'.packages.godot-lsp
           pkgs.gdscript-formatter
-          pkgs.ldtk
-          pkgs.tiled
-          pkgs.sfxr-qt
-          pkgs.audacity
         ]
         # Steam installs, so only on hosts with Steam
         ++ lib.optionals config.programs.steam.enable [
