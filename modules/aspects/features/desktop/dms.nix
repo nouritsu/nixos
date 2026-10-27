@@ -100,7 +100,6 @@
       # settings.json is read-only; GUI changes come back through DMS's
       # copy-JSON button into dms-settings.json
       systemd.user.tmpfiles.rules = [
-        "L+ %h/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/tabctl_mediator.json - - - - ${tabctlHost}"
         "L+ %h/.config/DankMaterialShell/settings.json - - - - ${settings}"
         "L+ %h/.config/DankMaterialShell/themes/catppuccin/theme.json - - - - ${inputs.dms-plugin-registry}/themes/catppuccin/theme.json"
       ];
