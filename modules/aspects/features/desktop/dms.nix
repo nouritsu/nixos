@@ -1,4 +1,13 @@
 {inputs, ...}: {
+  # on every host, so any aspect can add entries
+  den.default.nixos = {lib, ...}: {
+    # binaries the privacy indicator never shows
+    options.privacyApps'.ignore = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+    };
+  };
+
   den.aspects.dms = {
     nixos = {
       config,
@@ -18,7 +27,9 @@
         installed = lib.filterAttrs (_: p: p.enable) config.programs.dux-shell.plugins;
       in
         (pkgs.formats.json {}).generate "dms-plugin-settings.json"
-        (lib.mapAttrs (id: _: {enabled = true;} // pinned.${id} or {}) installed);
+        (lib.recursiveUpdate
+          (lib.mapAttrs (id: _: {enabled = true;} // pinned.${id} or {}) installed)
+          {privacyApps.ignore = config.privacyApps'.ignore;});
 
       clipboard = (pkgs.formats.json {}).generate "dms-clipboard.json" {
         maxHistory = -1;
@@ -90,6 +101,9 @@
 
       # gameControllerBattery, batteryPlus
       services.upower.enable = true;
+
+      # the bar's media visualiser records desktop audio
+      privacyApps'.ignore = ["cava"];
 
       # screenRecorderYS
       programs.gpu-screen-recorder.enable = true;
@@ -183,6 +197,12 @@
           columnWidth = {
             enable = true;
             src = self'.packages.dms-column-width;
+          };
+
+          # local: the privacy indicator, plus a popout of the apps behind it
+          privacyApps = {
+            enable = true;
+            src = self'.packages.dms-privacy-apps;
           };
 
           # patched: mkForce over the registry's src
