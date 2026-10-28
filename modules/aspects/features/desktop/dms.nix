@@ -8,14 +8,6 @@
       self',
       ...
     }: let
-      tabctlHost = pkgs.writeText "tabctl_mediator.json" (builtins.toJSON {
-        name = "tabctl_mediator";
-        description = "TabCtl native messaging host";
-        path = "/run/current-system/sw/bin/tabctl-mediator";
-        type = "stdio";
-        allowed_origins = ["chrome-extension://baomblllgemcgbignhpbipgiofmjdhpn/"];
-      });
-
       settings = (pkgs.formats.json {}).generate "dms-settings.json" (
         lib.pipe (lib.importJSON ./dms-settings.json) config.dms'.settingsOverrides
       );
@@ -23,7 +15,7 @@
       # every installed plugin is switched on, plus its pinned settings
       pluginSettings = let
         pinned = lib.importJSON ./dms-plugin-settings.json;
-        installed = lib.filterAttrs (_: p: p.enable) config.programs.dms-shell.plugins;
+        installed = lib.filterAttrs (_: p: p.enable) config.programs.dux-shell.plugins;
       in
         (pkgs.formats.json {}).generate "dms-plugin-settings.json"
         (lib.mapAttrs (id: _: {enabled = true;} // pinned.${id} or {}) installed);
@@ -37,13 +29,21 @@
         disabled = false;
       };
 
+      # theme schedule off, night light on its schedule
+      session = (pkgs.formats.json {}).generate "dms-session.json" {
+        themeModeAutoEnabled = false;
+        nightModeEnabled = true;
+        nightModeAutoEnabled = true;
+      };
+
       # pinned keys go over the live files; tokens, history and other state stay
       pinSettings = pkgs.writeShellApplication {
         name = "dms-pin-settings";
         runtimeInputs = [pkgs.jq pkgs.coreutils];
         text = ''
           dir=''${XDG_CONFIG_HOME:-$HOME/.config}/DankMaterialShell
-          mkdir -p "$dir"
+          state=''${XDG_STATE_HOME:-$HOME/.local/state}/DankMaterialShell
+          mkdir -p "$dir" "$state"
 
           merge() {
             [ -f "$1" ] || echo '{}' > "$1"
@@ -58,6 +58,7 @@
 
           merge "$dir/plugin_settings.json" ${pluginSettings}
           merge "$dir/clsettings.json" ${clipboard}
+          merge "$state/session.json" ${session}
         '';
       };
     in {
@@ -75,7 +76,7 @@
       environment.systemPackages = [
         pkgs.wl-clipboard-rs
         pkgs.xournalpp
-        pkgs.dsearch
+        pkgs.dux-search
         pkgs.wl-mirror
 
         # Plugin deps
@@ -85,7 +86,6 @@
         pkgs.librsvg # ocrScanner: rsvg-convert for dropped SVGs
         pkgs.libnotify # notify-send: ipIndicator IP changes, gameControllerBattery, dankPomodoroTimer
         pkgs.glib # gdbus: dankKDEConnect image sharing
-        self'.packages.tabctl # tabsLauncher
       ];
 
       # gameControllerBattery, batteryPlus
@@ -94,9 +94,6 @@
       # screenRecorderYS
       programs.gpu-screen-recorder.enable = true;
 
-      # tabsLauncher: brave reaches tabctl through its extension's native host
-      programs.chromium.extensions = ["baomblllgemcgbignhpbipgiofmjdhpn;https://clients2.google.com/service/update2/crx"];
-
       # settings.json is read-only; GUI changes come back through DMS's
       # copy-JSON button into dms-settings.json
       systemd.user.tmpfiles.rules = [
@@ -104,7 +101,7 @@
         "L+ %h/.config/DankMaterialShell/themes/catppuccin/theme.json - - - - ${inputs.dms-plugin-registry}/themes/catppuccin/theme.json"
       ];
 
-      # dms only reads plugin settings at start and saves its own copy over later edits
+      # dms only reads plugin settings and session at start and saves its own copy over later edits
       systemd.user.services.dms.serviceConfig.ExecStartPre = "-${lib.getExe pinSettings}";
 
       # dms keeps watching the old link target; restart it when a pin changes
@@ -151,7 +148,7 @@
       # DMS's power-profile switcher and cpu.balanced need it
       services.power-profiles-daemon.enable = true;
 
-      programs.dms-shell = {
+      programs.dux-shell = {
         enable = true;
         package = inputs'.dms.packages.default;
 
@@ -180,7 +177,6 @@
           gameControllerBattery.enable = true;
           batteryPlus.enable = true;
           screenRecorderYS.enable = true;
-          tabsLauncher.enable = true;
           windowFx.enable = true;
 
           # local: the focused window's width and height as a % of the screen
@@ -234,7 +230,7 @@
 
       # a failed connect ends in Error, never Closed, so reconnect() waits
       # forever and the widget stays on REST; re-arm once nothing is pending
-      programs.dms-shell.plugins.homeAssistantMonitor = {
+      programs.dux-shell.plugins.homeAssistantMonitor = {
         enable = true;
         src = lib.mkForce (pkgs.applyPatches {
           name = "dms-plugin-homeAssistantMonitor";
@@ -250,7 +246,7 @@
       };
     };
 
-    provides.battery.nixos.programs.dms-shell.plugins.batteryOSD.enable = true;
+    provides.battery.nixos.programs.dux-shell.plugins.batteryOSD.enable = true;
 
     # expects its go cli hand-built inside the per-user plugin dir
     provides.razer.nixos = {
@@ -263,7 +259,7 @@
       src = inputs'.dms-plugin-registry.packages.dankRazer;
       dankrazer = self'.packages.dankrazer;
     in {
-      programs.dms-shell.plugins.dankRazer = {
+      programs.dux-shell.plugins.dankRazer = {
         enable = true;
         src = lib.mkForce (pkgs.applyPatches {
           name = "dms-plugin-dankRazer";
@@ -285,7 +281,7 @@
 
     # hardcodes VPC2004:00 and errors on every start without it
     provides.ideapad.nixos = {lib, ...}: {
-      programs.dms-shell.plugins.dmsLenovoBatterySettings.enable = true;
+      programs.dux-shell.plugins.dmsLenovoBatterySettings.enable = true;
 
       # laptop only: Bar 2, right after batteryPlus
       dms'.settingsOverrides = [
@@ -318,7 +314,7 @@
     }: let
       tailscale = lib.getExe' config.services.tailscale.package "tailscale";
     in {
-      programs.dms-shell.plugins.dankscale = {
+      programs.dux-shell.plugins.dankscale = {
         enable = true;
 
         # pkexec execs the resolved path on a bare PATH, which turns tailscale
