@@ -8,7 +8,7 @@
     };
   };
 
-  den.aspects.dms = {
+  den.aspects.dux = {
     nixos = {
       config,
       pkgs,
@@ -17,21 +17,45 @@
       self',
       ...
     }: let
-      settings = (pkgs.formats.json {}).generate "dms-settings.json" (
-        lib.pipe (lib.importJSON ./dms-settings.json) config.dms'.settingsOverrides
+      settings = (pkgs.formats.json {}).generate "dux-settings.json" (
+        lib.pipe (lib.importJSON ./dux-settings.json) config.dux'.settingsOverrides
       );
 
       # every installed plugin is switched on, plus its pinned settings
       pluginSettings = let
-        pinned = lib.importJSON ./dms-plugin-settings.json;
+        pinned = lib.importJSON ./dux-plugin-settings.json;
         installed = lib.filterAttrs (_: p: p.enable) config.programs.dux-shell.plugins;
       in
-        (pkgs.formats.json {}).generate "dms-plugin-settings.json"
+        (pkgs.formats.json {}).generate "dux-plugin-settings.json"
         (lib.recursiveUpdate
           (lib.mapAttrs (id: _: {enabled = true;} // pinned.${id} or {}) installed)
           {privacyApps.ignore = config.privacyApps'.ignore;});
 
-      clipboard = (pkgs.formats.json {}).generate "dms-clipboard.json" {
+      # which-key entries for privacyApps' ipc
+      privacyEntries = action: icons: {
+        c = {
+          desc = "Camera";
+          icon = icons.camera;
+          cmd = "dms ipc call privacyApps ${action} camera";
+        };
+        m = {
+          desc = "Mic";
+          icon = icons.mic;
+          cmd = "dms ipc call privacyApps ${action} mic";
+        };
+        s = {
+          desc = "Stream";
+          icon = icons.screen;
+          cmd = "dms ipc call privacyApps ${action} screen";
+        };
+        a = {
+          desc = "All";
+          icon = icons.all;
+          cmd = "dms ipc call privacyApps ${action} all";
+        };
+      };
+
+      clipboard = (pkgs.formats.json {}).generate "dux-clipboard.json" {
         maxHistory = -1;
         maxEntrySize = 52428800;
         maxPinned = 25;
@@ -41,7 +65,7 @@
       };
 
       # theme schedule off, night light on its schedule
-      session = (pkgs.formats.json {}).generate "dms-session.json" {
+      session = (pkgs.formats.json {}).generate "dux-session.json" {
         themeModeAutoEnabled = false;
         nightModeEnabled = true;
         nightModeAutoEnabled = true;
@@ -49,7 +73,7 @@
 
       # pinned keys go over the live files; tokens, history and other state stay
       pinSettings = pkgs.writeShellApplication {
-        name = "dms-pin-settings";
+        name = "dux-pin-settings";
         runtimeInputs = [pkgs.jq pkgs.coreutils];
         text = ''
           dir=''${XDG_CONFIG_HOME:-$HOME/.config}/DankMaterialShell
@@ -74,10 +98,10 @@
       };
     in {
       imports = [
-        inputs.dms-plugin-registry.nixosModules.default
+        inputs.dux-plugin-registry.nixosModules.default
         {
           # per-host edits to the pinned settings, applied in order
-          options.dms'.settingsOverrides = lib.mkOption {
+          options.dux'.settingsOverrides = lib.mkOption {
             type = lib.types.listOf (lib.types.functionTo lib.types.attrs);
             default = [];
           };
@@ -108,21 +132,21 @@
       # screenRecorderYS
       programs.gpu-screen-recorder.enable = true;
 
-      # settings.json is read-only; GUI changes come back through DMS's
-      # copy-JSON button into dms-settings.json
+      # settings.json is read-only; GUI changes come back through Dux's
+      # copy-JSON button into dux-settings.json
       systemd.user.tmpfiles.rules = [
         "L+ %h/.config/DankMaterialShell/settings.json - - - - ${settings}"
-        "L+ %h/.config/DankMaterialShell/themes/catppuccin/theme.json - - - - ${inputs.dms-plugin-registry}/themes/catppuccin/theme.json"
+        "L+ %h/.config/DankMaterialShell/themes/catppuccin/theme.json - - - - ${inputs.dux-plugin-registry}/themes/catppuccin/theme.json"
       ];
 
-      # dms only reads plugin settings and session at start and saves its own copy over later edits
+      # dux only reads plugin settings and session at start and saves its own copy over later edits
       systemd.user.services.dms.serviceConfig.ExecStartPre = "-${lib.getExe pinSettings}";
 
-      # dms keeps watching the old link target; restart it when a pin changes
-      system.userActivationScripts.dms-settings = {
+      # dux keeps watching the old link target; restart it when a pin changes
+      system.userActivationScripts.dux-settings = {
         deps = ["tmpfiles"];
         text = ''
-          stamp=''${XDG_STATE_HOME:-$HOME/.local/state}/dms-settings-pin
+          stamp=''${XDG_STATE_HOME:-$HOME/.local/state}/dux-settings-pin
           if [ "$(cat "$stamp" 2>/dev/null)" != "${settings} ${pinSettings}" ]; then
             mkdir -p "$(dirname "$stamp")"
             echo "${settings} ${pinSettings}" > "$stamp"
@@ -133,6 +157,20 @@
 
       programs.kdeconnect = {
         enable = true;
+        package = self'.packages.kdeconnect;
+      };
+
+      # gnome's RemoteDesktop and InputCapture need mutter, which niri lacks;
+      # both backends allow-list kdeconnect as a caller
+      xdg.portal = {
+        extraPortals = [
+          self'.packages.hypr-kdeconnect-fix
+          self'.packages.xdg-desktop-portal-layercapture
+        ];
+        config.niri = {
+          "org.freedesktop.impl.portal.RemoteDesktop" = ["hypr-kdeconnect"];
+          "org.freedesktop.impl.portal.InputCapture" = ["layercapture"];
+        };
       };
 
       which-key'.menu.t.submenu = {
@@ -153,18 +191,32 @@
           app-id = "kdeconnect";
         };
         n = {
-          desc = "DMS notepad";
+          desc = "Dux notepad";
           icon = "f039e";
           cmd = "dms ipc call notepad open";
         };
       };
 
-      # DMS's power-profile switcher and cpu.balanced need it
+      # for the focused window's app
+      which-key'.menu.b.submenu = privacyEntries "block" {
+        camera = "f1737";
+        mic = "f036d";
+        screen = "f078a";
+        all = "f00ad";
+      };
+      which-key'.menu.B.submenu = privacyEntries "unblock" {
+        camera = "f05a0";
+        mic = "f036c";
+        screen = "f0118";
+        all = "f012d";
+      };
+
+      # Dux's power-profile switcher and cpu.balanced need it
       services.power-profiles-daemon.enable = true;
 
       programs.dux-shell = {
         enable = true;
-        package = inputs'.dms.packages.default;
+        package = inputs'.dux.packages.default;
 
         plugins = {
           dankKDEConnect.enable = true;
@@ -180,7 +232,6 @@
           wallpaperCarousel.enable = true;
           handMirror.enable = true;
           recentFiles.enable = true;
-          screenshotPlus.enable = true;
           dankTranslate.enable = true;
           systemMonitorPlus.enable = true;
           nixPackageRunner.enable = true;
@@ -196,13 +247,13 @@
           # local: the focused window's width and height as a % of the screen
           columnWidth = {
             enable = true;
-            src = self'.packages.dms-column-width;
+            src = self'.packages.dux-column-width;
           };
 
           # local: the privacy indicator, plus a popout of the apps behind it
           privacyApps = {
             enable = true;
-            src = self'.packages.dms-privacy-apps;
+            src = self'.packages.dux-privacy-apps;
           };
 
           # patched: mkForce over the registry's src
@@ -211,8 +262,8 @@
           claudeCodeUsage = {
             enable = true;
             src = lib.mkForce (pkgs.applyPatches {
-              name = "dms-plugin-claudeCodeUsage";
-              src = inputs'.dms-plugin-registry.packages.claudeCodeUsage;
+              name = "dux-plugin-claudeCodeUsage";
+              src = inputs'.dux-plugin-registry.packages.claudeCodeUsage;
               postPatch = ''
                 substituteInPlace ClaudeCodeUsageWidget.qml --replace-fail \
                   'PluginService.pluginDirectory + "/claudeCodeUsage/get-claude-usage"' \
@@ -226,13 +277,24 @@
           ipIndicator = {
             enable = true;
             src = lib.mkForce (pkgs.applyPatches {
-              name = "dms-plugin-ipIndicator";
-              src = inputs'.dms-plugin-registry.packages.ipIndicator;
+              name = "dux-plugin-ipIndicator";
+              src = inputs'.dux-plugin-registry.packages.ipIndicator;
               postPatch = ''
                 substituteInPlace IPIndicatorWidget.qml \
                   --replace-fail "ls /sys/class/net | grep -E '^(" "ip route get 1.1.1.1 | grep -oE 'dev (" \
                   --replace-fail "cscotun)' | head -1" "cscotun)[^ ]*' | cut -c5- | head -1"
               '';
+            });
+          };
+
+          # dux's clipboard dies with a dux restart and offers the png path,
+          # deleted 10 s later; wl-copy holds the image bytes in its own process
+          screenshotPlus = {
+            enable = true;
+            src = lib.mkForce (pkgs.applyPatches {
+              name = "dux-plugin-screenshotPlus";
+              src = inputs'.dux-plugin-registry.packages.screenshotPlus;
+              patches = [./screenshot-plus-wl-copy.patch];
             });
           };
         };
@@ -253,8 +315,8 @@
       programs.dux-shell.plugins.homeAssistantMonitor = {
         enable = true;
         src = lib.mkForce (pkgs.applyPatches {
-          name = "dms-plugin-homeAssistantMonitor";
-          src = inputs'.dms-plugin-registry.packages.homeAssistantMonitor;
+          name = "dux-plugin-homeAssistantMonitor";
+          src = inputs'.dux-plugin-registry.packages.homeAssistantMonitor;
           postPatch = ''
             substituteInPlace services/WebSocketClient.qml \
               --replace-fail '_reopenOnClosed = true;' '_reopenOnClosed = true; reopenFallback.restart();' \
@@ -263,6 +325,150 @@
                 function sendTextMessage(msg) {'
           '';
         });
+      };
+    };
+
+    # dcal colours a single-file calendar from its VCALENDAR and names it after
+    # the file, so the feeds are mirrored with our colour written in
+    provides.calendar.nixos = {
+      config,
+      host,
+      pkgs,
+      lib,
+      ...
+    }: let
+      owner = lib.head (lib.attrNames host.users);
+
+      # .ics on the server, calendar name, catppuccin mocha colour, token
+      feeds = [
+        {
+          feed = "lectures";
+          name = "CampusNet · Lectures";
+          color = "#cba6f7";
+          token = "vps";
+        }
+        {
+          feed = "tutorials";
+          name = "CampusNet · Tutorials";
+          color = "#a6e3a1";
+          token = "vps";
+        }
+        {
+          feed = "exams";
+          name = "CampusNet · Exams";
+          color = "#f38ba8";
+          token = "vps";
+        }
+        {
+          feed = "other";
+          name = "CampusNet · Other";
+          color = "#89b4fa";
+          token = "vps";
+        }
+        {
+          feed = "birthdays";
+          name = "Birthdays";
+          color = "#fab387";
+          token = "homelab";
+        }
+      ];
+
+      # calendar-level colours out, ours in; folded lines go with their property
+      recolour = pkgs.writeText "calsync-recolour.awk" ''
+        {
+          line = $0
+          sub(/\r$/, "", line)
+        }
+        drop && line ~ /^[ \t]/ { next }
+        { drop = 0 }
+        line == "BEGIN:VCALENDAR" {
+          print
+          printf "X-APPLE-CALENDAR-COLOR:%s\r\n", color
+          header = 1
+          next
+        }
+        header && line ~ /^BEGIN:/ { header = 0 }
+        header && toupper(line) ~ /^(COLOR|X-APPLE-CALENDAR-COLOR)[;:]/ {
+          drop = 1
+          next
+        }
+        { print }
+      '';
+
+      calsync = pkgs.writeShellApplication {
+        name = "calsync";
+        runtimeInputs = [pkgs.curl pkgs.gawk pkgs.jq pkgs.coreutils pkgs.dux-calendar];
+        text = ''
+          shopt -s nullglob
+          dir=''${XDG_DATA_HOME:-$HOME/.local/share}/calsync
+          mkdir -p "$dir"
+
+          # temp names without .ics, or dcal lists them as calendars
+          fetch() {
+            local feed=$1 name=$2 color=$3 tmp
+            tmp=$(mktemp "$dir/.$feed.XXXXXX")
+            if curl -fsSL --max-time 60 -o "$tmp" "https://cal.nouritsu.com/$(< "$4")/$feed.ics" \
+              && [ "$(head -c 15 "$tmp")" = BEGIN:VCALENDAR ]; then
+              awk -v color="$color" -f ${recolour} "$tmp" > "$tmp.new"
+              mv "$tmp.new" "$dir/$name.ics"
+            else
+              echo "$feed: fetch failed, keeping the last copy" >&2
+            fi
+            rm -f "$tmp" "$tmp.new"
+          }
+
+          ${lib.concatMapStrings (f: ''
+              fetch ${lib.escapeShellArgs [f.feed f.name f.color config.sops.secrets."calsync/${f.token}-token".path]}
+            '')
+            feeds}
+          # feeds dropped from the list
+          for f in "$dir"/*.ics; do
+            case ''${f##*/} in
+              ${lib.concatMapStringsSep " | " (f: lib.escapeShellArg "${f.name}.ics") feeds}) ;;
+              *) rm -f "$f" ;;
+            esac
+          done
+
+          # dcal seeds a default calendar into an empty dir, so wait for a feed
+          files=("$dir"/*.ics)
+          if [ ''${#files[@]} -gt 0 ]; then
+            if ! dcal account list --json | jq -e 'any(.[]; .id == "local:calsync")' > /dev/null; then
+              dcal account add local "$dir" --name Subscriptions > /dev/null
+            fi
+            dcal sync local:calsync > /dev/null
+          fi
+        '';
+      };
+    in {
+      sops.secrets = lib.genAttrs ["calsync/vps-token" "calsync/homelab-token"] (_: {
+        sopsFile = ../secrets/shared.yaml;
+        inherit owner;
+      });
+
+      environment.systemPackages = [pkgs.dux-calendar];
+
+      # dux's calendar reads events from the dcal daemon
+      systemd.packages = [pkgs.dux-calendar];
+      systemd.user.services.dcal = {
+        wantedBy = ["graphical-session.target"];
+        # quickshell for its window comes from the session PATH
+        path = lib.mkForce [];
+      };
+
+      systemd.user.services.calsync = {
+        description = "Mirror the calendar feeds for dcal";
+        after = ["dcal.service"];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = lib.getExe calsync;
+        };
+      };
+      systemd.user.timers.calsync = {
+        wantedBy = ["timers.target"];
+        timerConfig = {
+          OnStartupSec = "1min";
+          OnUnitActiveSec = "30min";
+        };
       };
     };
 
@@ -276,13 +482,13 @@
       self',
       ...
     }: let
-      src = inputs'.dms-plugin-registry.packages.dankRazer;
+      src = inputs'.dux-plugin-registry.packages.dankRazer;
       dankrazer = self'.packages.dankrazer;
     in {
       programs.dux-shell.plugins.dankRazer = {
         enable = true;
         src = lib.mkForce (pkgs.applyPatches {
-          name = "dms-plugin-dankRazer";
+          name = "dux-plugin-dankRazer";
           inherit src;
           postPatch = ''
             substituteInPlace DankRazerWidget.qml --replace-fail \
@@ -304,7 +510,7 @@
       programs.dux-shell.plugins.dmsLenovoBatterySettings.enable = true;
 
       # laptop only: Bar 2, right after batteryPlus
-      dms'.settingsOverrides = [
+      dux'.settingsOverrides = [
         (settings: let
           widget = {
             id = "dmsLenovoBatterySettings";
@@ -340,8 +546,8 @@
         # pkexec execs the resolved path on a bare PATH, which turns tailscale
         # into tailscaled and breaks uutils' multicall env/timeout
         src = lib.mkForce (pkgs.applyPatches {
-          name = "dms-plugin-dankscale";
-          src = inputs'.dms-plugin-registry.packages.dankscale;
+          name = "dux-plugin-dankscale";
+          src = inputs'.dux-plugin-registry.packages.dankscale;
           postPatch = ''
             substituteInPlace services/TailscaleService.qml \
               --replace-fail '"pkexec", "tailscale"' '"pkexec", "${pkgs.coreutils}/bin/env", "${tailscale}"' \

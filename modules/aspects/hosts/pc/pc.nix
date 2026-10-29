@@ -16,11 +16,12 @@
       peripherals.monitor
       peripherals.tablet
       peripherals.razer
-      dms.razer
+      dux.razer
       audio.presets
 
       secrets
-      dms.home-assistant
+      dux.home-assistant
+      dux.calendar
       services.beszel
       extra.streaming
       extra.clipping.always-on
@@ -33,5 +34,37 @@
       ssh.from-pixel
       backup.from-homelab
     ];
+
+    nixos = {
+      host,
+      lib,
+      ...
+    }: let
+      owner = lib.head (lib.attrNames host.users);
+    in {
+      sops.defaultSopsFile = ./secrets.yaml;
+
+      # home assistant: the dux widget and claude's mcp
+      sops.secrets."ha-pc-token" = {inherit owner;};
+      sops.secrets."ha-claude-token" = {inherit owner;};
+
+      # no battery: weather grows up into its slot, level with the clock
+      dux'.settingsOverrides = [
+        (settings:
+          settings
+          // {
+            dashCards = map (card:
+              if card.id == "weather"
+              then
+                card
+                // {
+                  row = 0;
+                  h = 2;
+                }
+              else card)
+            (builtins.filter (card: card.id != "battery") settings.dashCards);
+          })
+      ];
+    };
   };
 }
