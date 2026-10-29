@@ -84,6 +84,16 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # kdeconnect portals for niri, built in packages/kdeconnect
+    hypr-kdeconnect-fix = {
+      url = "github:gfhdhytghd/hypr-kdeconnect-fix";
+      flake = false;
+    };
+    layercapture = {
+      url = "github:iNViTiON/xdg-desktop-portal-layercapture";
+      flake = false;
+    };
+
     batfetch = {
       url = "github:ashish-kus/batfetch";
       inputs.nixpkgs.follows = "nixpkgs";
