@@ -9,7 +9,10 @@
 
       hotkey-overlay.skip-at-startup = _: {};
 
-      # mouse/touchpad come from DMS; a block here would be replaced anyway
+      # mouse/touchpad come from Dux; a block here would be replaced anyway
+
+      # drag to the left/right edge scrolls (default 1500)
+      gestures.dnd-edge-view-scroll.max-speed = 2250;
 
       layout = {
         empty-workspace-above-first = _: {};
