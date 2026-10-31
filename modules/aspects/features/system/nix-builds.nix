@@ -6,11 +6,11 @@
       sops.secrets."nix-builder-key" = {};
 
       nix.distributedBuilds = true;
-      # lenovo fetches inputs from the caches, not over wi-fi from here
+      # laptop fetches inputs from the caches, not over wi-fi from here
       nix.settings.builders-use-substitutes = true;
       nix.buildMachines = [
         {
-          hostName = "lenovo";
+          hostName = "laptop";
           protocol = "ssh-ng";
           sshUser = user;
           sshKey = config.sops.secrets."nix-builder-key".path;
@@ -26,8 +26,8 @@
       # nix-daemon connects as root, so these are system-wide
       # lan only; bare names can resolve into the work tailnet
       programs.ssh.extraConfig = ''
-        Host lenovo
-          HostName lenovo.local
+        Host laptop
+          HostName laptop.local
           Compression yes
           ConnectTimeout 3
       '';
@@ -41,7 +41,7 @@
       # like nix.sshServe, but refuses while on battery
       serve = pkgs.writeShellScript "nix-builds-from-pc" ''
         if ! ${config.systemd.package}/bin/systemd-ac-power; then
-          echo "lenovo is on battery; not taking builds" >&2
+          echo "laptop is on battery; not taking builds" >&2
           exit 1
         fi
         exec ${config.nix.package.out}/bin/nix-daemon --stdio

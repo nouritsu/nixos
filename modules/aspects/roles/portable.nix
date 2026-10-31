@@ -1,5 +1,5 @@
 {den, ...}: {
-  den.aspects.laptop.includes = with den.aspects; [
+  den.aspects.portable.includes = with den.aspects; [
     base
     desktop
     gaming
@@ -7,7 +7,7 @@
     office
     ai
     power
-    dms.battery
+    dux.battery
     extra.media
     extra.download
     extra.productivity
