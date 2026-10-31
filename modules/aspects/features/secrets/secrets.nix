@@ -15,19 +15,19 @@
 
       environment.systemPackages = [pkgs.sops];
 
+      # each host aspect sets sops.defaultSopsFile to its own secrets.yaml;
+      # secrets both hosts read name ./shared.yaml as their sopsFile
       sops = {
-        defaultSopsFile = ./secrets.yaml;
         defaultSopsFormat = "yaml";
         age.keyFile = "${config.users.users.${owner}.home}/.config/sops/age/keys.txt";
       };
 
-      sops.secrets."ha-pc-token" = {
-        inherit owner;
+      # mutable users: only applied when the user is first created
+      sops.secrets."${owner}/password" = {
+        sopsFile = ./shared.yaml;
+        neededForUsers = true;
       };
-
-      sops.secrets."ha-claude-token" = {
-        inherit owner;
-      };
+      users.users.${owner}.hashedPasswordFile = config.sops.secrets."${owner}/password".path;
     };
   };
 }
