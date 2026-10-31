@@ -348,16 +348,140 @@
     proton = {
       includes = [(den.batteries.unfree ["proton-authenticator"])];
       nixos = {
+        self',
+        host,
         pkgs,
         lib,
         ...
-      }: {
+      }: let
+        json = (pkgs.formats.json {}).generate;
+
+        # pi-hole first, cloudflare when away from home
+        vpnSettings = json "proton-vpn-settings.json" {
+          custom_dns = {
+            enabled = true;
+            ip_list = [
+              {
+                ip = "192.168.178.128";
+                enabled = true;
+              }
+              {
+                ip = "1.1.1.1";
+                enabled = true;
+              }
+            ];
+          };
+        };
+        vpnAppConfig = json "proton-vpn-app-config.json" {
+          connect_at_app_startup = "FASTEST";
+        };
+
+        # pinned keys go over the live files; login and the rest stay GUI
+        pinVpn = pkgs.writeShellApplication {
+          name = "proton-vpn-pin-settings";
+          runtimeInputs = [pkgs.jq pkgs.coreutils];
+          text = ''
+            dir=''${XDG_CONFIG_HOME:-$HOME/.config}/Proton/VPN
+            mkdir -p "$dir"
+
+            merge() {
+              [ -s "$1" ] || echo '{}' > "$1"
+              jq -e --slurpfile pin "$2" '. * $pin[0] == .' "$1" > /dev/null && return
+              tmp=$(mktemp "$1.XXXXXX")
+              if jq --slurpfile pin "$2" '. * $pin[0]' "$1" > "$tmp"; then
+                mv "$tmp" "$1"
+              else
+                rm -f "$tmp"
+              fi
+            }
+
+            merge "$dir/settings.json" ${vpnSettings}
+            merge "$dir/app-config.json" ${vpnAppConfig}
+          '';
+        };
+
+        # Split tunneling
+        split-tunnel = self'.packages.proton-vpn-split-tunnel;
+        mark = toString split-tunnel.fwmark;
+        # after tailscale's rules, so tailnet addresses still go through table 52
+        bypassTable = "5300";
+
+        # steam and anything launched through novpn
+        bypassApps = json "proton-vpn-bypass-apps.json" (lib.genAttrs (lib.attrNames host.users) (_: [
+          "~/.local/share/Steam/"
+          "~/.steam/"
+          "${self'.packages.novpn}/"
+        ]));
+
+        # marked sockets get the physical routes, never the tunnel's or the kill switch's
+        bypassRoutes = pkgs.writeShellApplication {
+          name = "proton-vpn-bypass-routes";
+          runtimeInputs = [pkgs.iproute2 pkgs.gnugrep pkgs.gnused];
+          text = ''
+            ip -4 rule list table ${bypassTable} | grep -q . \
+              || ip -4 rule add priority ${bypassTable} fwmark ${mark} lookup ${bypassTable}
+
+            routes=$(ip -4 route show table main | grep -v -E 'dev (proton|pvpn|ipv6leak|tailscale)' | sed 's/ linkdown//' || true)
+            ip -4 route flush table ${bypassTable} 2> /dev/null || true
+            while read -r route; do
+              # shellcheck disable=SC2086
+              [ -z "$route" ] || ip -4 route add $route table ${bypassTable} || echo "skipped: $route" >&2
+            done <<< "$routes"
+          '';
+        };
+      in {
         environment.systemPackages = [
           pkgs.proton-authenticator
           pkgs.protonmail-desktop
           pkgs.proton-pass
           pkgs.proton-vpn
+          self'.packages.novpn
         ];
+
+        # pi-hole is unreachable away from home; fall through to the next server fast
+        networking.resolvconf.extraOptions = ["timeout:1"];
+
+        systemd.services.proton-vpn-split-tunneling = {
+          description = "Proton VPN split tunneling";
+          wantedBy = ["multi-user.target"];
+          # bcc builds its bpf against the running kernel's kheaders module
+          path = [pkgs.kmod pkgs.gnutar pkgs.xz];
+          # a kernel bcc can't build against fails every start; stop retrying
+          startLimitBurst = 3;
+          startLimitIntervalSec = 120;
+          serviceConfig = {
+            ExecStartPre = "-${lib.getExe bypassRoutes}";
+            ExecStart = "${lib.getExe split-tunnel} ${mark} ${bypassApps}";
+            Restart = "on-failure";
+            RestartSec = 5;
+          };
+        };
+
+        networking.networkmanager.dispatcherScripts = [
+          {
+            source = lib.getExe bypassRoutes;
+            type = "basic";
+          }
+        ];
+
+        # novpn in front of the line, or of the last command if empty
+        programs.fish.interactiveShellInit = ''
+          bind alt-v 'fish_commandline_prepend novpn'
+        '';
+
+        systemd.user.services.proton-vpn = {
+          description = "Proton VPN";
+          wantedBy = ["graphical-session.target"];
+          partOf = ["graphical-session.target"];
+          after = ["graphical-session.target"];
+          serviceConfig = {
+            ExecStartPre = "-${lib.getExe pinVpn}";
+            # it checks for a tray only at launch
+            ExecStart = "${lib.getExe self'.packages.wait-for-tray} ${lib.getExe pkgs.proton-vpn} --start-minimized";
+            Restart = "on-failure";
+            Slice = "app.slice";
+          };
+        };
 
         which-key'.menu.p.submenu = {
           m = {
