@@ -16,6 +16,11 @@
           command = "${tuigreet} --time --remember --remember-session --sessions ${sessions}";
           user = "greeter";
         };
+        # once per boot, unauthenticated: key-login is the check
+        initial_session = {
+          command = lib.getExe keyLogin;
+          user = owner;
+        };
       };
     };
   };
