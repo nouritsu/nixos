@@ -93,9 +93,7 @@
 
     pdf.nixos = {pkgs, ...}: {
       environment.systemPackages = [
-        pkgs.pdftk
         pkgs.poppler-utils
-        pkgs.pdfchain
         pkgs.papers
       ];
 
