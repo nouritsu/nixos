@@ -267,8 +267,6 @@
 
         environment.systemPackages = [
           pkgs.mangohud
-          pkgs.protonup-ng
-          self'.packages.balatro-sync
           (pkgs.makeDesktopItem {
             name = "steam-bigpicture";
             desktopName = "Steam Big Picture";
