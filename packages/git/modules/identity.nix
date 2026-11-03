@@ -1,4 +1,8 @@
-{lib, ...}: {
+{
+  den,
+  lib,
+  ...
+}: {
   # shared by the git and jujutsu wrappers
   flake.nixosModules.wgit-identity = {
     options.signingKeys = lib.mkOption {
