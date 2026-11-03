@@ -4,12 +4,12 @@
   ...
 }: {
   flake.nixosModules.wniri-keybinds = {
+    config,
     pkgs,
     lib,
     ...
   }: let
     inherit (pkgs.stdenv.hostPlatform) system;
-    cwd = ''"$(${lib.getExe' inputs.niri-cwd.packages.${system}.niri-cwd "niri-cwd"} -d "$HOME")"'';
     woomer = lib.getExe pkgs.woomer;
     wezterm = lib.getExe self.packages.${system}.wezterm;
     scrcpy = lib.getExe self.packages.${system}.scrcpy;
@@ -23,6 +23,44 @@
     wpctl = lib.getExe' pkgs.wireplumber "wpctl";
     brightnessctl = lib.getExe pkgs.brightnessctl;
     playerctl = lib.getExe pkgs.playerctl;
+
+    # a tuios window's shells belong to its daemon, so its focused pane is asked instead
+    focused-cwd = pkgs.writeShellApplication {
+      name = "focused-cwd";
+      runtimeInputs = [config.package pkgs.jq pkgs.procps pkgs.tuios];
+      text = ''
+        focused=$(niri msg --json focused-window | jq -r '.pid // empty') || focused=
+        if [[ -n $focused ]]; then
+          while read -r pid session; do
+            while ((pid > 1)); do
+              if [[ $pid == "$focused" ]]; then
+                dir=$(tuios list-windows -s "$session" --json | jq -r '.focused_window_id as $id | (.windows // [])[] | select(.window_id == $id) | .cwd // empty') || dir=
+                if [[ -d $dir ]]; then
+                  printf '%s\n' "$dir"
+                  exit 0
+                fi
+                break
+              fi
+              pid=$(ps -o ppid= -p "$pid" | tr -d ' ') || break
+            done
+          done < <(tuios list-clients --json 2>/dev/null | jq -r '(. // [])[] | select(.session != "") | "\(.pid) \(.session)"')
+        fi
+        exec ${lib.getExe' inputs.niri-cwd.packages.${system}.niri-cwd "niri-cwd"} -d "$HOME"
+      '';
+    };
+    cwd = ''"$(${lib.getExe focused-cwd})"'';
+
+    tuios-window = pkgs.writeShellApplication {
+      name = "tuios-window";
+      runtimeInputs = [config.package pkgs.jq];
+      text = ''
+        id=$(niri msg --json windows | jq 'first(.[] | select(.app_id == "tuios") | .id) // empty') || id=
+        if [[ -n $id ]]; then
+          exec niri msg action focus-window --id "$id"
+        fi
+        exec ${wezterm} start --class tuios -- ${tuios} attach main -c
+      '';
+    };
   in {
     settings.window-rules = [
       {
@@ -34,7 +72,8 @@
     settings.binds = {
       # Applications
       "Mod+Return".spawn-sh = "${wezterm} start --cwd ${cwd}";
-      "Mod+W".spawn = brave;
+      "Mod+Shift+Return".spawn = lib.getExe tuios-window;
+      "Mod+W".spawn = [ror "--app-id-regex" "^brave-origin$" "--" brave];
       "Mod+E".spawn-sh = "${nautilus} --new-window ${cwd}";
       "Mod+Shift+E".spawn-sh = "${wezterm} start --cwd ${cwd} -- ${yazi}";
 
