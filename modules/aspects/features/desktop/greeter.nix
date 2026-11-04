@@ -1,4 +1,4 @@
-{
+{den, ...}: {
   den.aspects.greeter.nixos = {
     config,
     host,

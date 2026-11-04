@@ -11,20 +11,30 @@
       config,
       ...
     }: {
-      imports = [inputs.sops-nix.nixosModules.sops];
+      imports = [
+        inputs.sops-nix.nixosModules.sops
+        {
+          # what both hosts read; the rest is in each host aspect's sops.defaultSopsFile
+          options.secrets'.shared = lib.mkOption {
+            type = lib.types.path;
+            default = ./shared.yaml;
+            readOnly = true;
+          };
+        }
+      ];
 
-      environment.systemPackages = [pkgs.sops];
+      # editing decrypts with a touch: the plugin's magic identity in ~/.config/sops/age/keys.txt
+      environment.systemPackages = [pkgs.sops pkgs.age-plugin-fido2-hmac];
 
-      # each host aspect sets sops.defaultSopsFile to its own secrets.yaml;
-      # secrets both hosts read name ./shared.yaml as their sopsFile
       sops = {
         defaultSopsFormat = "yaml";
-        age.keyFile = "${config.users.users.${owner}.home}/.config/sops/age/keys.txt";
+        # .sops.yaml's host recipients are these keys; a new host key needs sops updatekeys
+        age.sshKeyPaths = ["/etc/ssh/ssh_host_ed25519_key"];
       };
 
       # mutable users: only applied when the user is first created
       sops.secrets."${owner}/password" = {
-        sopsFile = ./shared.yaml;
+        sopsFile = config.secrets'.shared;
         neededForUsers = true;
       };
       users.users.${owner}.hashedPasswordFile = config.sops.secrets."${owner}/password".path;

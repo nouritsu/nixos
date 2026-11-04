@@ -1,4 +1,4 @@
-{
+{den, ...}: {
   den.aspects.security = {
     nixos = {
       security.polkit.enable = true;
@@ -29,12 +29,17 @@
     # two security keys: a touch instead of the password, typing it still works
     provides.yubikey.nixos = {
       config,
+      host,
       pkgs,
+      lib,
       ...
     }: let
+      owner = lib.head (lib.attrNames host.users);
       ssh = config.programs.ssh.package;
+      inherit (config.programs.ssh) knownHosts;
+      hostNames = hosts: lib.concatStringsSep "," (lib.concatMap (host: host.hostNames) hosts);
 
-      # stubs from ssh-keygen -K, no passphrase; the key itself is the guard
+      # the stubs have no passphrase; the key itself is the guard
       loadKeys = pkgs.writeShellScript "ssh-agent-sk-load" ''
         shopt -s nullglob
         keys=()
@@ -44,6 +49,24 @@
         (( ''${#keys[@]} )) || exit 0
         SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-sk.sock" ${ssh}/bin/ssh-add "''${keys[@]}"
       '';
+
+      # a touch prints a line and ends auth; a miss jumps past it, says so and asks the password
+      # pam_exec, not pam_echo: plain sudo runs pam silent and pam_echo then returns ignore
+      touchCue = name: let
+        inherit (config.security.pam.services.${name}.rules.auth) u2f;
+        echo = order: control: text: {
+          inherit order control;
+          modulePath = "${config.security.pam.package}/lib/security/pam_exec.so";
+          args = ["quiet" "stdout" "${pkgs.coreutils}/bin/echo" text];
+        };
+      in {
+        u2f.enable = true;
+        rules.auth = {
+          u2f.control = lib.mkForce "[success=ok default=1]";
+          touch-ok = echo (u2f.order + 1) "[success=done default=ignore]" "✓ touch accepted";
+          touch-missed = echo (u2f.order + 2) "[default=ignore]" "✗ no touch, password instead";
+        };
+      };
     in {
       environment.systemPackages = [
         pkgs.yubikey-manager
@@ -54,23 +77,56 @@
       # one origin, so a key registered once works on both hosts
       security.pam.u2f.settings = {
         origin = "pam://aneesh";
-        authfile = ./u2f-keys;
+        authfile = config.sops.secrets."u2f-keys".path;
         cue = true;
       };
 
-      # greetd and login stay password only: the keyring unlocks from it
+      sops.secrets =
+        {
+          # shatterlock runs pam as the user
+          "u2f-keys" = {
+            sopsFile = config.secrets'.shared;
+            mode = "0444";
+          };
+        }
+        // lib.mapAttrs' (name: _:
+          lib.nameValuePair "ssh-sk/${name}" {
+            sopsFile = config.secrets'.shared;
+            inherit owner;
+          })
+        den.lib.securityKeys;
+
+      # where ssh-keygen -K puts them; linked at login, sops runs before ~ is mounted
+      systemd.user.tmpfiles.users.${owner}.rules =
+        ["d %h/.ssh 0700 - - -"]
+        ++ lib.concatLists (lib.mapAttrsToList (name: key: let
+            stub = "%h/.ssh/id_ed25519_sk_rk_${name}";
+          in [
+            "L+ ${stub} - - - - ${config.sops.secrets."ssh-sk/${name}".path}"
+            "L+ ${stub}.pub - - - - ${pkgs.writeText "${name}.pub" "${key.ssh}\n"}"
+          ])
+          den.lib.securityKeys);
+
+      # login stays password only: the keyring unlocks from it
       security.pam.services = {
-        sudo.u2f.enable = true;
-        sudo-i.u2f.enable = true;
+        sudo = touchCue "sudo";
+        sudo-i = touchCue "sudo-i";
         # run0 asks through polkit too
-        polkit-1.u2f.enable = true;
+        polkit-1 = touchCue "polkit-1";
         # shatterlock runs it beside the password field, retrying until a touch
         shatterlock-key = {
           u2f.enable = true;
           unixAuth = false;
+          # no authpending file: yubikey-touch-detector would notify behind the lock all night
+          rules.auth.u2f.settings.authpending_file = "";
         };
       };
-      shatterlock'.settings.lock.fingerprintService = "shatterlock-key";
+
+      # polkit's sandboxed helper sees no devices, so no key without hidraw
+      systemd.services."polkit-agent-helper@".serviceConfig = {
+        PrivateDevices = false;
+        DeviceAllow = ["char-hidraw rw"];
+      };
 
       # a notification while a key blinks for a touch
       programs.yubikey-touch-detector.enable = true;
@@ -103,10 +159,10 @@
         };
       };
       programs.ssh.extraConfig = ''
-        Match originalhost homelab,192.168.178.128,nouritsu.com user aneesh
+        Match originalhost ${hostNames [knownHosts.homelab knownHosts.vps]} user aneesh
           ForwardAgent ''${SSH_SK_AUTH_SOCK}
         # root here takes only the security keys
-        Match originalhost pc,laptop,pc.local,laptop.local,homelab,192.168.178.128,nouritsu.com user root
+        Match originalhost ${hostNames (lib.attrValues knownHosts)} user root
           IdentityAgent ''${SSH_SK_AUTH_SOCK}
       '';
     };

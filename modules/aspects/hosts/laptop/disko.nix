@@ -64,7 +64,7 @@
               type = "luks";
               name = "cryptswap";
               passwordFile = "/tmp/luks.key";
-              # opens from root's volume key (unlock.nix), or asks for its passphrase
+              # opens from root's volume key, or asks for its passphrase
               settings.allowDiscards = true;
               content = {
                 type = "swap";
@@ -75,9 +75,6 @@
         };
       };
     };
-
-    # sops reads the age key from ~ during activation
-    fileSystems."/home".neededForBoot = true;
 
     services.btrfs.autoScrub.enable = true;
   };
