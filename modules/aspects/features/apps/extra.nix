@@ -82,11 +82,9 @@
             "audio/x-m4a"
           ] (_: "mpv.desktop");
 
-        # v4l2loopback only; obs itself is installed above
-        programs.obs-studio = {
-          enable = true;
-          package = null;
-          enableVirtualCamera = true;
+        isup'.checks.spotify = {
+          name = "Spotify";
+          url = "https://open.spotify.com";
         };
       };
     };
@@ -118,6 +116,11 @@
         download-spotify = "spotdl";
         download-spot = "spotdl";
       };
+
+      isup'.checks.youtube = {
+        name = "YouTube";
+        url = "https://www.youtube.com";
+      };
     };
 
     productivity.nixos = {
@@ -130,6 +133,19 @@
         pkgs.drawio
         self'.packages.splashtop-business
       ];
+
+      isup'.checks = {
+        ankiweb = {
+          name = "AnkiWeb";
+          url = "https://ankiweb.net";
+        };
+        splashtop = {
+          name = "Splashtop";
+          status = "https://status.splashtop.com";
+          components = ["Splashtop remote desktop service (Global)" "Splashtop remote desktop service (EU)"];
+          url = "https://my.splashtop.com";
+        };
+      };
     };
 
     fetchers = {
@@ -260,6 +276,31 @@
             app-id = "teams-for-linux";
           };
         };
+
+        isup'.checks = {
+          discord = {
+            name = "Discord";
+            status = "https://discordstatus.com";
+            components = ["API" "Gateway" "Media Proxy" "Desktop"];
+            url = "https://discord.com/api/v10/gateway";
+          };
+          telegram = {
+            name = "Telegram";
+            url = "https://web.telegram.org/a/";
+          };
+          whatsapp = {
+            name = "WhatsApp";
+            url = "https://web.whatsapp.com/";
+          };
+          slack = {
+            name = "Slack";
+            url = "https://app.slack.com";
+          };
+          teams = {
+            name = "Teams";
+            url = "https://teams.microsoft.com";
+          };
+        };
       };
     };
 
@@ -305,6 +346,12 @@
         };
 
         environment.sessionVariables.MANGOHUD_CONFIGFILE = "${inputs'.catppuccin.packages.mangohud}/mocha/MangoHud.conf";
+
+        # no official status api
+        isup'.checks.steam = {
+          name = "Steam";
+          url = "https://store.steampowered.com";
+        };
       };
     };
 
@@ -518,6 +565,13 @@
             cmd = lib.getExe pkgs.proton-authenticator;
             app-id = "proton.?authenticator";
           };
+        };
+
+        isup'.checks.proton = {
+          name = "Proton";
+          status = "https://status.proton.me";
+          components = ["Proton Mail" "Proton VPN" "Proton Pass"];
+          url = "https://account.proton.me";
         };
       };
     };
