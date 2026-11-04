@@ -1,5 +1,13 @@
 {
-  flake.nixosModules.wniri-rules = {
+  flake.nixosModules.wniri-rules = let
+    # proton, gamescope, eden, minecraft
+    games = [
+      {app-id = "^steam_app_\\d+$";}
+      {app-id = "^gamescope$";}
+      {app-id = "eden_emu|^eden$";}
+      {app-id = "^Minecraft";}
+    ];
+  in {
     settings.window-rules = [
       # big picture never asks for fullscreen through xwayland-satellite
       {
@@ -19,6 +27,12 @@
           {title = "^UNDERTALE$";}
         ];
         open-fullscreen = true;
+      }
+
+      {
+        matches = games;
+        # on outputs set to on-demand vrr in Dux's display settings
+        variable-refresh-rate = true;
       }
     ];
 

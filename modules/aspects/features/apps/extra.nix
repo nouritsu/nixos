@@ -319,7 +319,6 @@
       environment.systemPackages = [
         pkgs.r2modman
         prismlauncher
-        pkgs.deadlock-mod-manager
       ];
 
       which-key'.menu.g.submenu = {
