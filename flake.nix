@@ -103,6 +103,50 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-parts.follows = "flake-parts";
     };
+    nfsm = {
+      url = "github:gvolpe/nfsm";
+      flake = false;
+    };
+    niri-ror = {
+      url = "github:boomskats/niri-ror";
+      flake = false;
+    };
+    oniri = {
+      url = "github:Antiz96/oniri";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nirimap = {
+      url = "github:alexandergknoll/nirimap";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    niri-pip = {
+      url = "github:t1ktakdev/niri-pip";
+      flake = false;
+    };
+    utsushot = {
+      url = "github:xevrion/utsushot";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    liixini-shaders = {
+      url = "github:liixini/shaders";
+      flake = false;
+    };
+    replay-fish = {
+      url = "github:jorgebucaran/replay.fish";
+      flake = false;
+    };
+    folder-color = {
+      url = "github:costales/folder-color";
+      flake = false;
+    };
+    steam-native-notifications = {
+      url = "github:tyvsmith/steam-native-notifications";
+      flake = false;
+    };
+    lemurs = {
+      url = "github:coastalwhite/lemurs";
+      flake = false;
+    };
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";

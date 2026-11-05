@@ -310,6 +310,7 @@
         self',
         pkgs,
         inputs',
+        lib,
         ...
       }: {
         programs.steam = {
@@ -342,6 +343,11 @@
             desc = "Big Picture";
             icon = "f0502";
             cmd = "steam steam://open/bigpicture";
+          };
+          q = {
+            desc = "Force quit";
+            icon = "f015c";
+            cmd = lib.getExe self'.packages.force-quit;
           };
         };
 

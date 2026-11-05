@@ -12,7 +12,12 @@
     inherit (pkgs.stdenv.hostPlatform) system;
     woomer = lib.getExe pkgs.woomer;
     wezterm = lib.getExe self.packages.${system}.wezterm;
-    scrcpy = lib.getExe self.packages.${system}.scrcpy;
+    tuios = lib.getExe pkgs.tuios;
+    nirius = lib.getExe pkgs.nirius;
+    nfsm = lib.getExe self.packages.${system}.nfsm-cli;
+    ror = lib.getExe self.packages.${system}.niri-ror;
+    freeze = lib.getExe pkgs.wl-freeze;
+    force-quit = lib.getExe self.packages.${system}.force-quit;
     yazi = lib.getExe self.packages.${system}.yazi;
     nautilus = lib.getExe self.packages.${system}.nautilus;
     shatterlock = lib.getExe self.packages.${system}.shatterlock;
@@ -78,7 +83,7 @@
       "Mod+Shift+E".spawn-sh = "${wezterm} start --cwd ${cwd} -- ${yazi}";
 
       "Mod+Z".spawn = woomer;
-      "Mod+P".spawn = scrcpy;
+      "Mod+P".spawn = [nirius "toggle-follow-mode"];
 
       "Mod+Space".spawn = "wlr-which-key";
       "Mod+Shift+Space".spawn = [pkill "-x" "wlr-which-key"];
@@ -136,9 +141,11 @@
 
       # Window actions
       "Mod+Q".close-window = {};
+      "Mod+Shift+Q".spawn = force-quit;
+      "Mod+Pause".spawn = [freeze "-a"];
       "Mod+Ctrl+C".center-visible-columns = {};
       "Mod+Shift+C".center-window = {};
-      "Mod+F".fullscreen-window = {};
+      "Mod+F".spawn = nfsm;
       "Mod+Shift+F".toggle-window-floating = {};
       "Mod+R".switch-preset-column-width = {};
       "Mod+M".maximize-column = {};

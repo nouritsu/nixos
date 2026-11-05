@@ -9,6 +9,10 @@
     niri
     niri.portals
     niri.xwayland
+    nirius
+    nfsm
+    nirimap
+    niri-pip
     which-key
     dux
     dux.tailscale
