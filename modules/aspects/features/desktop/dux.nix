@@ -17,9 +17,7 @@
       self',
       ...
     }: let
-      settings = (pkgs.formats.json {}).generate "dux-settings.json" (
-        lib.pipe (lib.importJSON ./dux-settings.json) config.dux'.settingsOverrides
-      );
+      settings = (pkgs.formats.json {}).generate "dux-settings.json" config.dux'.settings;
 
       # every installed plugin is switched on, plus its pinned settings
       pluginSettings = let
@@ -71,6 +69,12 @@
         nightModeAutoEnabled = true;
       };
 
+      # nixos-artwork's nineish catppuccin mocha, at 4k
+      wallpaper = pkgs.fetchurl {
+        url = "https://raw.githubusercontent.com/harilvfs/wallpapers/6cba59b9a2c9ce19427ac153f901fafff2c03da0/nix-wallpaper-nineish-catppuccin-mocha.png";
+        hash = "sha256-nFoNfk7Y/CGKWtscOE5GOxshI5eFmppWvhxHzOJ6mCA=";
+      };
+
       # pinned keys go over the live files; tokens, history and other state stay
       pinSettings = pkgs.writeShellApplication {
         name = "dux-pin-settings";
@@ -94,6 +98,17 @@
           merge "$dir/plugin_settings.json" ${pluginSettings}
           merge "$dir/clsettings.json" ${clipboard}
           merge "$state/session.json" ${session}
+
+          # default wallpaper only while none is set or it's gone; gui picks stay
+          wall=$(jq -r '.wallpaperPath // ""' "$state/session.json") || wall=
+          if [ -z "$wall" ] || [ ! -e "$wall" ]; then
+            tmp=$(mktemp "$state/session.json.XXXXXX")
+            if jq --arg wall ${wallpaper} '.wallpaperPath = $wall' "$state/session.json" > "$tmp"; then
+              mv "$tmp" "$state/session.json"
+            else
+              rm -f "$tmp"
+            fi
+          fi
         '';
       };
     in {
@@ -105,14 +120,23 @@
             type = lib.types.listOf (lib.types.functionTo lib.types.attrs);
             default = [];
           };
+
+          # the result; dux-freeze evals it
+          options.dux'.settings = lib.mkOption {
+            type = lib.types.attrs;
+            readOnly = true;
+          };
         }
       ];
+
+      dux'.settings = lib.pipe (lib.importJSON ./dux-settings.json) config.dux'.settingsOverrides;
 
       environment.systemPackages = [
         pkgs.wl-clipboard-rs
         pkgs.xournalpp
         pkgs.dux-search
         pkgs.wl-mirror
+        self'.packages.utsushot
 
         # Plugin deps
         pkgs.translate-shell # dankTranslate: trans
@@ -227,7 +251,6 @@
           webSearch.enable = true;
           sshConnections.enable = true;
           airQuality.enable = true;
-          dockerManager.enable = true;
           dankLauncherKeys.enable = true;
           wallpaperCarousel.enable = true;
           handMirror.enable = true;
@@ -238,11 +261,9 @@
           ocrScanner.enable = true;
           dankPomodoroTimer.enable = true;
           takeABreak.enable = true;
-          simpleAudioControl.enable = true;
           gameControllerBattery.enable = true;
           batteryPlus.enable = true;
           screenRecorderYS.enable = true;
-          windowFx.enable = true;
 
           # local: the focused window's width and height as a % of the screen
           columnWidth = {
@@ -256,7 +277,38 @@
             src = self'.packages.dux-privacy-apps;
           };
 
+          # own flake: the audio pill, device pickers, level meters and the mixer
+          audigon = {
+            enable = true;
+            src = inputs'.dux-audigon.packages.default;
+          };
+
           # patched: mkForce over the registry's src
+
+          # liixini/shaders as extra close/open kinds
+          windowFx = {
+            enable = true;
+            src = lib.mkForce self'.packages.dux-window-fx;
+          };
+
+          # widget lookup spanned every bar, hiding the top bar's tray and monitor
+          # hover zone over the pill left its tint stuck after a click; off unless hover is used
+          hiddenBar = {
+            enable = true;
+            src = lib.mkForce (pkgs.applyPatches {
+              name = "dux-plugin-hiddenBar";
+              src = inputs'.dux-plugin-registry.packages.hiddenBar;
+              postPatch = ''
+                substituteInPlace HiddenBarWidget.qml \
+                  --replace-fail 'let myScreen = pluginRoot.parentScreen.name;' \
+                    'let myScreen = pluginRoot.parentScreen.name; let myBarId = BarWidgetService.registrationForItem(pluginRoot)?.context?.barId ?? "";' \
+                  --replace-fail 'BarWidgetService.getWidget(id, myScreen)' \
+                    'BarWidgetService.resolveWidget(id, {screenName: myScreen, barId: myBarId})?.item' \
+                  --replace-fail 'id: triggerZone' \
+                    'id: triggerZone; enabled: pluginRoot.autoExpand || pluginRoot.autoCollapse'
+              '';
+            });
+          };
 
           # script path assumed the per-user plugin dir
           claudeCodeUsage = {
@@ -289,12 +341,16 @@
 
           # dux's clipboard dies with a dux restart and offers the png path,
           # deleted 10 s later; wl-copy holds the image bytes in its own process
+          # supersample: utsushot's capture of the focused window, out the same way
           screenshotPlus = {
             enable = true;
             src = lib.mkForce (pkgs.applyPatches {
               name = "dux-plugin-screenshotPlus";
               src = inputs'.dux-plugin-registry.packages.screenshotPlus;
-              patches = [./screenshot-plus-wl-copy.patch];
+              patches = [
+                ./screenshot-plus-wl-copy.patch
+                ./screenshot-plus-supersample.patch
+              ];
             });
           };
         };
@@ -512,8 +568,44 @@
     };
 
     # hardcodes VPC2004:00 and errors on every start without it
-    provides.ideapad.nixos = {lib, ...}: {
-      programs.dux-shell.plugins.dmsLenovoBatterySettings.enable = true;
+    provides.ideapad.nixos = {
+      host,
+      pkgs,
+      lib,
+      inputs',
+      ...
+    }: let
+      owner = lib.head (lib.attrNames host.users);
+
+      # writes 0 or 1 and nothing else
+      setConservation = pkgs.writeShellScript "ideapad-conservation-mode" ''
+        [[ $1 == [01] ]] || exit 2
+        echo "$1" > /sys/bus/platform/devices/VPC2004:00/conservation_mode
+      '';
+    in {
+      programs.dux-shell.plugins.dmsLenovoBatterySettings = {
+        enable = true;
+
+        # pkexec runs the script instead of sh -c
+        src = lib.mkForce (pkgs.applyPatches {
+          name = "dux-plugin-dmsLenovoBatterySettings";
+          src = inputs'.dux-plugin-registry.packages.dmsLenovoBatterySettings;
+          postPatch = ''
+            substituteInPlace DmsLenovoBatteryWidget.qml \
+              --replace-fail '"sh", "-c", `echo ''${targetValue} > ''${root.lenovoAcpiId}''${root.conservationModeAcpiNode}`' '"${setConservation}", targetValue'
+          '';
+        });
+      };
+
+      # no prompt for the script, from the owner's local session
+      security.polkit.extraConfig = ''
+        polkit.addRule(function(action, subject) {
+          if (action.id == "org.freedesktop.policykit.exec" &&
+              action.lookup("program") == "${setConservation}" &&
+              subject.user == "${owner}" && subject.local && subject.active)
+            return polkit.Result.YES;
+        });
+      '';
 
       # laptop only: Bar 2, right after batteryPlus
       dux'.settingsOverrides = [
