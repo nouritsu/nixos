@@ -1,4 +1,13 @@
-{den, ...}: {
+{
+  nixpkgs'.unfree = [
+    "slack"
+    "steam"
+    "steam-unwrapped"
+    "steam-original"
+    "steam-run"
+    "proton-authenticator"
+  ];
+
   den.aspects.extra.provides = {
     media = {
       nixos = {
@@ -212,7 +221,6 @@
     };
 
     chat = {
-      includes = [(den.batteries.unfree ["slack"])];
       nixos = {
         self',
         pkgs,
@@ -305,7 +313,6 @@
     };
 
     gaming = {
-      includes = [(den.batteries.unfree ["steam" "steam-unwrapped" "steam-original" "steam-run"])];
       nixos = {
         self',
         pkgs,
@@ -409,7 +416,6 @@
     };
 
     proton = {
-      includes = [(den.batteries.unfree ["proton-authenticator"])];
       nixos = {
         self',
         host,
