@@ -91,7 +91,9 @@
       "Mod+D".spawn = ["wlr-which-key" "--initial-keys" "c"];
       "Mod+B".spawn-sh = "dms ipc call widget toggle privacyApps";
 
-      "Mod+A".spawn-sh = "dms ipc call spotlight toggle";
+      # super alone, on release; any other key or click in between cancels it
+      "Mod".release.spawn-sh = "dms ipc call launcher toggle";
+      "Mod+A".spawn-sh = "dms ipc call widget toggle audigon";
       "Mod+I".spawn-sh = "dms ipc call settings focusOrToggle";
       "Mod+V".spawn-sh = "dms ipc call clipboard toggle";
       "Mod+Escape".spawn = [shatterlock "toggle"];
@@ -108,7 +110,7 @@
       };
       "Ctrl+Shift+Escape".spawn-sh = "dms ipc call processlist focusOrToggle";
       "Mod+Shift+W".spawn-sh = "dms ipc call wallpaperCarousel toggle";
-      "Mod+C".spawn-sh = "dms color pick -a";
+      "Mod+C".spawn-sh = "dms ipc call control-center toggle";
       "Mod+N".spawn-sh = "dms ipc call notifications toggle";
       "Mod+Shift+N".spawn-sh = "dms ipc call notifications clearAll";
 
