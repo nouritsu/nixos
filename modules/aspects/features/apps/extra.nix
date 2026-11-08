@@ -18,8 +18,8 @@
       }: {
         environment.systemPackages = [
           pkgs.ffmpeg-full
-          self'.packages.obs-studio
-          pkgs.eog
+          self'.packages.kdenlive
+          self'.packages.imv
           self'.packages.mpv
           self'.packages.spotify
           self'.packages.jellyfin-mpv-shim
@@ -37,12 +37,6 @@
             icon = "f0ecf";
             cmd = lib.getExe self'.packages.jellyfin-mpv-shim;
             app-id = "jellyfin-mpv-shim$";
-          };
-          o = {
-            desc = "OBS";
-            icon = "f044b";
-            cmd = lib.getExe self'.packages.obs-studio;
-            app-id = "obsproject|^obs$";
           };
           v = {
             desc = "mpv";
@@ -67,7 +61,7 @@
             "image/x-bmp"
             "image/tiff"
             "image/svg+xml"
-          ] (_: "org.gnome.eog.desktop")
+          ] (_: "imv-dir.desktop")
           # umpv claims these too
           // lib.genAttrs [
             "video/mp4"
