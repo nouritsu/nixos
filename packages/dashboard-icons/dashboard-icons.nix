@@ -17,7 +17,9 @@
           "documenso"
           "enclosed-light"
           "fritzbox-light"
+          "gatus"
           "home-assistant"
+          "immich"
           "jellyfin"
           "mousehole-dark"
           "paperless-ngx"
@@ -31,7 +33,7 @@
           "sonarr"
           "syncthing"
         ];
-        hash = "sha256-sRKykE9D5vmqWrGECTIcMMfmXE2pBuutFOXRObTiLLk=";
+        hash = "sha256-Lq/UTpp7LichACSTkoylldTAqUpPSpGszWgcCrBnTj4=";
       };
       passthru.nup = ["--version=branch"];
     };
