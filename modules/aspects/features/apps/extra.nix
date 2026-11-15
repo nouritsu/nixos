@@ -38,6 +38,12 @@
             cmd = lib.getExe self'.packages.jellyfin-mpv-shim;
             app-id = "jellyfin-mpv-shim$";
           };
+          y = {
+            desc = "FreeTube";
+            icon = "f05c3";
+            cmd = lib.getExe self'.packages.freetube;
+            app-id = "freetube";
+          };
           v = {
             desc = "mpv";
             icon = "f1705";
