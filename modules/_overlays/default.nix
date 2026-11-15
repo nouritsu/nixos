@@ -6,5 +6,4 @@ inputs: [
   (import ./yubikey-touch-detector.nix)
   # hide-from-own-capture
   inputs.shatterlock.overlays.niri
-  inputs.millennium.overlays.default
 ]
