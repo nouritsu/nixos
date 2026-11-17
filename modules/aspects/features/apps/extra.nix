@@ -22,7 +22,10 @@
           self'.packages.imv
           self'.packages.mpv
           self'.packages.spotify
-          self'.packages.jellyfin-mpv-shim
+          pkgs.jellyfin-mpv-shim
+          self'.packages.freetube
+          pkgs.snapshot
+          pkgs.guvcview # opens /dev/video* directly, so it sees the scrcpy-camera loopback
         ];
 
         which-key'.menu.m.submenu = {
@@ -49,6 +52,18 @@
             icon = "f1705";
             cmd = "${lib.getExe self'.packages.mpv} --player-operation-mode=pseudo-gui";
             app-id = "^mpv$";
+          };
+          c = {
+            desc = "Camera";
+            icon = "f0100";
+            cmd = lib.getExe pkgs.snapshot;
+            app-id = "org.gnome.Snapshot";
+          };
+          w = {
+            desc = "guvcview";
+            icon = "f05a0";
+            cmd = lib.getExe pkgs.guvcview;
+            app-id = "guvcview";
           };
         };
 
