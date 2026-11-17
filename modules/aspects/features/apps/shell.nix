@@ -96,6 +96,11 @@
       bind ctrl-alt-p '__tv_insert procs'
       bind ctrl-v "__tv_insert env --source-output '{split:=:0}'"
 
+      # alt-1..3 put the nth last command on the prompt
+      for n in 1 2 3
+          bind alt-$n "commandline -r -- \$history[$n]"
+      end
+
       # zoxide's zi needs fzf
       function zi
           set -l dir (tv zoxide --input "$argv" --keybindings 'enter="confirm_selection"')
