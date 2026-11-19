@@ -1,0 +1,16 @@
+{
+  "id": "powerDraw",
+  "name": "Power Draw",
+  "description": "CPU and GPU power draw with history and hardware details, battery stats and charge history, conservation mode and power profiles",
+  "version": "1.0.0",
+  "author": "Aneesh Bhave",
+  "icon": "bolt",
+  "type": "composite",
+  "capabilities": ["dankbar-widget", "daemon", "control-center"],
+  "components": {
+    "widget": "./PowerDrawWidget.qml",
+    "daemon": "./PowerDrawDaemon.qml"
+  },
+  "settings": "./PowerDrawSettings.qml",
+  "permissions": ["settings_read", "settings_write"]
+}
