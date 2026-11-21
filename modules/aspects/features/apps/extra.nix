@@ -38,7 +38,7 @@
           j = {
             desc = "Jellyfin MPV Shim";
             icon = "f0ecf";
-            cmd = lib.getExe self'.packages.jellyfin-mpv-shim;
+            cmd = lib.getExe pkgs.jellyfin-mpv-shim;
             app-id = "jellyfin-mpv-shim$";
           };
           y = {

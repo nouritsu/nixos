@@ -348,16 +348,13 @@
             });
           };
 
-          # dux's clipboard dies with a dux restart and offers the png path,
-          # deleted 10 s later; wl-copy holds the image bytes in its own process
-          # supersample: utsushot's capture of the focused window, out the same way
+          # supersample: utsushot's capture of the focused window
           screenshotPlus = {
             enable = true;
             src = lib.mkForce (pkgs.applyPatches {
               name = "dux-plugin-screenshotPlus";
               src = inputs'.dux-plugin-registry.packages.screenshotPlus;
               patches = [
-                ./screenshot-plus-wl-copy.patch
                 ./screenshot-plus-supersample.patch
               ];
             });
@@ -586,13 +583,12 @@
         enable = true;
 
         # pkexec execs the resolved path on a bare PATH, which turns tailscale
-        # into tailscaled and breaks uutils' multicall env/timeout
+        # into tailscaled and breaks uutils' multicall timeout
         src = lib.mkForce (pkgs.applyPatches {
           name = "dux-plugin-dankscale";
           src = inputs'.dux-plugin-registry.packages.dankscale;
           postPatch = ''
             substituteInPlace services/TailscaleService.qml \
-              --replace-fail '"pkexec", "tailscale"' '"pkexec", "${pkgs.coreutils}/bin/env", "${tailscale}"' \
               --replace-fail '"pkexec", "timeout"' '"pkexec", "${pkgs.coreutils}/bin/timeout"' \
               --replace-fail '"tailscale", "login"' '"${tailscale}", "login"'
           '';
