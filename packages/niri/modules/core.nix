@@ -10,6 +10,7 @@
       hotkey-overlay.skip-at-startup = _: {};
 
       # mouse/touchpad come from Dux; a block here would be replaced anyway
+      input.focus-follows-mouse = _: {};
 
       # drag to the left/right edge scrolls (default 1500)
       gestures.dnd-edge-view-scroll.max-speed = 2250;
