@@ -24,7 +24,6 @@
     yazi
     shell
     starship
-    tuios
     isup
   ];
 }

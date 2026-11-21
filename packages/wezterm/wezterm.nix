@@ -20,7 +20,7 @@ in {
             local wezterm = require "wezterm"
             local act = wezterm.action
 
-            -- on the alt screen (tuios, helix) the key goes to the app
+            -- on the alt screen (helix, yazi) the key goes to the app
             local function alt_screen(key, mods, action)
               return {
                 key = key,
@@ -51,7 +51,7 @@ in {
               -- the default only escapes spaces
               quote_dropped_files = "Posix",
 
-              -- tuios's ctrl+space leader and ctrl+alt chords
+              -- full key reporting; helix and fish use it
               enable_kitty_keyboard = true,
 
               -- keybinds, defaults off

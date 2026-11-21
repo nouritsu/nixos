@@ -65,8 +65,7 @@
       in
         builtins.toJSON {
           inherit (settings) attribution permissions;
-          # the formatters; tuios's matcher-less hooks only matter in its panes
-          hooks.PostToolUse = lib.filter (group: group ? matcher) settings.hooks.PostToolUse;
+          hooks = {inherit (settings.hooks) PostToolUse;};
 
           # read in place through the /etc link, so a switch updates it
           extraKnownMarketplaces.nixos-config.source = {
