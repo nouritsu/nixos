@@ -1,11 +1,4 @@
 {
-  nixpkgs' = {
-    unfree = ["nrfconnect" "nrf-udev" "segger-jlink"];
-    # J-Link GUI tools bundle EOL Qt4
-    insecure = ["segger-jlink-qt4"];
-    config.segger-jlink.acceptLicense = true;
-  };
-
   den.aspects.dev = {
     nixos = {pkgs, ...}: {
       environment.systemPackages = [
@@ -98,14 +91,10 @@
 
           environment.systemPackages = [
             pkgs.openocd
-            pkgs.nrfconnect # power profiler app for the PPK2 lives in here
-            pkgs.segger-jlink # nRF Connect refuses to flash without a system J-Link
           ];
 
           services.udev.packages = [
             pkgs.stlink
-            pkgs.nrf-udev
-            pkgs.segger-jlink
             pkgs.platformio-core.udev
           ];
         };
