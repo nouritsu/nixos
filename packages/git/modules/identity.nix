@@ -3,7 +3,7 @@
   lib,
   ...
 }: {
-  # shared by the git and jujutsu wrappers
+  # the git wrapper's identity and per-host signing keys
   flake.nixosModules.wgit-identity = {
     config,
     pkgs,

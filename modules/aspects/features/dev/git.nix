@@ -17,9 +17,7 @@
     in {
       environment.systemPackages = [
         self'.packages.delta
-        self'.packages.jujutsu
         self'.packages.lazygit
-        self'.packages.jjui
         self'.packages.gh-dash
         pkgs.gh
         pkgs.git-absorb
@@ -34,8 +32,6 @@
         enable = true;
         package = git;
       };
-
-      programs.fish.shellAliases.lazyjj = "jjui";
 
       programs.fish.shellAbbrs = {
         gp = "git push";
