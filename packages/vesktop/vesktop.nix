@@ -17,6 +17,13 @@ in {
        * @website https://github.com/catppuccin/discord
       **/
       @import url("https://catppuccin.github.io/discord/dist/${name}.css");
+
+      :root {
+        --font-primary: "Maple Mono NF";
+        --font-display: "Maple Mono NF";
+        --font-headline: "Maple Mono NF";
+        --font-code: "Maple Mono NF";
+      }
     '';
 
     enforce = pkgs.writeShellApplication {

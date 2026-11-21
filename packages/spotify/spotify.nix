@@ -141,6 +141,18 @@ in {
         hideSidebarScrollbar
         fixMainViewWidth
         disableRecommendations
+
+        # maple mono; spotify's text goes through these stacks
+        ''
+          *, *::before, *::after {
+            --encore-body-font-stack: "Maple Mono NF", sans-serif !important;
+            --encore-title-font-stack: "Maple Mono NF", sans-serif !important;
+            --encore-variable-font-stack: "Maple Mono NF", sans-serif !important;
+          }
+          body {
+            font-family: "Maple Mono NF", sans-serif !important;
+          }
+        ''
       ];
     };
   in {

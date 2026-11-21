@@ -4,6 +4,8 @@
       enable = true;
       theme = "snowflake";
       themePackages = [self'.packages.plymouth-snowflake];
+      # the initrd's only font, for the hint and password dots
+      font = "${self'.packages.maple-mono-nf}/share/fonts/truetype/MapleMono-NF-Regular.ttf";
     };
 
     # its port also sets boot.plymouth.theme

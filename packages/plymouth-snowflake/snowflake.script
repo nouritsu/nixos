@@ -91,7 +91,7 @@ fun show_hint ()
         return;
       }
 
-    font = "Sans " + Math.Int(Window.GetHeight() / 75);
+    font = "Maple Mono NF " + Math.Int(Window.GetHeight() / 75);
     # mistakes in red, the rest as faint as the key
     if (!state.busy && (state.error != "" || state.key == "wrong-key"))
       {
@@ -126,7 +126,7 @@ fun display_password_callback (text, count)
         dots = "";
         for (i = 0; i < count; i++)
           dots = dots + "●";
-        bullets.image = Image.Text(dots, @mauve@, 1, "Sans " + Math.Int(Window.GetHeight() / 60));
+        bullets.image = Image.Text(dots, @mauve@, 1, "Maple Mono NF " + Math.Int(Window.GetHeight() / 60));
         bullets.sprite.SetImage(bullets.image);
         bullets.sprite.SetPosition(centre_x(bullets.image), row_y() - bullets.image.GetHeight() / 2, 1);
         bullets.sprite.SetOpacity(1);

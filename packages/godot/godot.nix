@@ -4,6 +4,7 @@
   inherit (nix-colors.lib.conversions) hexToRGB;
 in {
   perSystem = {
+    self',
     pkgs,
     lib,
     ...
@@ -89,6 +90,12 @@ in {
       {
         key = "interface/theme/icon_saturation";
         value = 0.6;
+      }
+
+      # script editor only; the editor ui keeps its own
+      {
+        key = "interface/editor/code_font";
+        value = "${self'.packages.maple-mono-nf}/share/fonts/truetype/MapleMono-NF-Regular.ttf";
       }
     ];
 

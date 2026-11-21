@@ -385,7 +385,10 @@
           };
         };
 
-        environment.sessionVariables.MANGOHUD_CONFIGFILE = "${inputs'.catppuccin.packages.mangohud}/mocha/MangoHud.conf";
+        environment.sessionVariables.MANGOHUD_CONFIGFILE = pkgs.runCommand "MangoHud.conf" {} ''
+          cat ${inputs'.catppuccin.packages.mangohud}/mocha/MangoHud.conf > $out
+          echo "font_file=${self'.packages.maple-mono-nf}/share/fonts/truetype/MapleMono-NF-Regular.ttf" >> $out
+        '';
 
         # no official status api
         isup'.checks.steam = {

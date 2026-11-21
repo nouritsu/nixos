@@ -26,6 +26,9 @@ in {
           # uosc draws its own
           osc=no
           osd-bar=no
+
+          # uosc's text too
+          osd-font="Maple Mono NF"
         '';
 
         "mpv.input".content = ''
