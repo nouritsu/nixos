@@ -265,22 +265,25 @@
           takeABreak.enable = true;
           gameControllerBattery.enable = true;
 
-          # local: the focused window's width and height as a % of the screen
+          # own flake: the focused window's width and height as a % of the screen
           columnWidth = {
             enable = true;
-            src = self'.packages.dux-column-width;
+            src = inputs'.dux-column-width.packages.default.override {
+              # niri's struts, for the widget's working area
+              inherit (self'.packages.niri.configuration.settings.layout) struts;
+            };
           };
 
-          # local: the privacy indicator, plus a popout of the apps behind it
+          # own flake: the privacy indicator, plus a popout of the apps behind it
           privacyApps = {
             enable = true;
-            src = self'.packages.dux-privacy-apps;
+            src = inputs'.dux-privacy-apps.packages.default;
           };
 
-          # local: power draw, battery, conservation mode and power profiles
+          # own flake: power draw, battery, conservation mode and power profiles
           powerDraw = {
             enable = true;
-            src = self'.packages.dux-power-draw;
+            src = inputs'.dux-power-draw.packages.default;
           };
 
           # own flake: the audio pill, device pickers, level meters and the mixer
@@ -532,7 +535,7 @@
     provides.ideapad.nixos = {
       host,
       lib,
-      self',
+      inputs',
       ...
     }: let
       owner = lib.head (lib.attrNames host.users);
@@ -541,7 +544,7 @@
       security.polkit.extraConfig = ''
         polkit.addRule(function(action, subject) {
           if (action.id == "org.freedesktop.policykit.exec" &&
-              action.lookup("program") == "${self'.packages.dux-power-draw.conservation}" &&
+              action.lookup("program") == "${inputs'.dux-power-draw.packages.default.conservation}" &&
               subject.user == "${owner}" && subject.local && subject.active)
             return polkit.Result.YES;
         });

@@ -65,6 +65,21 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    dux-column-width = {
+      url = "github:nouritsu/dux-column-width";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    dux-power-draw = {
+      url = "github:nouritsu/dux-power-draw";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    dux-privacy-apps = {
+      url = "github:nouritsu/dux-privacy-apps";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     spicetify-nix = {
       url = "github:Gerg-L/spicetify-nix";
       inputs.nixpkgs.follows = "nixpkgs";
