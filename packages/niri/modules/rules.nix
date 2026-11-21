@@ -7,6 +7,13 @@
       {app-id = "eden_emu|^eden$";}
       {app-id = "^Minecraft";}
     ];
+
+    # mpv, the shim's player, freetube
+    players = [
+      {app-id = "^mpv$";}
+      {app-id = "(?i)jellyfin-mpv-shim$";}
+      {app-id = "(?i)freetube";}
+    ];
   in {
     settings.window-rules = [
       # big picture never asks for fullscreen through xwayland-satellite
@@ -62,6 +69,36 @@
         # on outputs set to on-demand vrr in Dux's display settings
         variable-refresh-rate = true;
       }
+
+      # wezterm's translucent background
+      {
+        matches = [
+          {app-id = "^org\\.wezfurlong\\.wezterm$";}
+          {app-id = "^btop$";}
+        ];
+        background-effect.blur = true;
+      }
+
+      # not is-focused: a launcher or which-key taking focus would fade everything
+      {
+        matches = [{is-active = false;}];
+        excludes = games ++ players;
+        opacity = 0.85;
+        background-effect.blur = true;
+      }
+
+      # menus and popovers; 15 is libadwaita's popup radius
+      {
+        matches = [
+          {app-id = "^org\\.gnome\\.Nautilus$";}
+          {app-id = "^org\\.gnome\\.Papers$";}
+        ];
+        popups = {
+          geometry-corner-radius = 15;
+          opacity = 0.85;
+          background-effect.blur = true;
+        };
+      }
     ];
 
     settings.layer-rules = [
@@ -69,6 +106,12 @@
         matches = [{namespace = "^wlr_which_key$";}];
         shadow.on = _: {};
         geometry-corner-radius = 12;
+        background-effect.blur = true;
+      }
+
+      {
+        matches = [{namespace = "^nirimap$";}];
+        background-effect.blur = true;
       }
 
       # live halves capture the screen under shatterlock, not shatterlock itself

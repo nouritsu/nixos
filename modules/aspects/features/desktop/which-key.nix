@@ -92,7 +92,8 @@ in {
       {
         settings = {
           font = "Maple Mono NF 13";
-          background = "#${palette.base00}";
+          # 85%, niri blurs behind it
+          background = "#${palette.base00}d9";
           color = "#${palette.base05}";
           border = "#${palette.base0E}";
           separator = span palette.base04 " ${glyph "279c"} ";

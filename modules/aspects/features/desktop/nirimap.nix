@@ -20,6 +20,8 @@ in {
       appearance = {
         focused_color = "#${palette.base0E}";
         active_workspace_border_color = "#${palette.base0E}";
+        # its default bg is base00; niri blurs behind it
+        background_opacity = 0.85;
       };
       behavior.overview_only = true;
     };

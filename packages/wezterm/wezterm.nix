@@ -39,6 +39,9 @@ in {
               font = wezterm.font "Maple Mono NF",
               font_size = 14.0,
 
+              -- niri blurs behind it
+              window_background_opacity = 0.85,
+
               hide_tab_bar_if_only_one_tab = true,
               show_tab_index_in_tab_bar = false,
               show_new_tab_button_in_tab_bar = false,

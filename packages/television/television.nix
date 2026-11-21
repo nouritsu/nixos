@@ -16,9 +16,10 @@ in {
           # cable channels are written for sh
           shell = "bash";
 
-          # port as overrides; tv only reads theme files from its config dir
-          ui.theme = "catppuccin";
-          ui.theme_overrides = lib.importTOML "${inputs.catppuccin-television}/themes/catppuccin-mocha-mauve.toml";
+          # port as overrides; tv only reads theme files from its config dir.
+          # default has no bg and overrides can't unset one, so wezterm's translucent bg shows
+          ui.theme = "default";
+          ui.theme_overrides = removeAttrs (lib.importTOML "${inputs.catppuccin-television}/themes/catppuccin-mocha-mauve.toml") ["background"];
 
           # replaces tv's default triggers
           shell_integration = {
