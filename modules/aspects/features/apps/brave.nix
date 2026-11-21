@@ -1,5 +1,10 @@
 {
-  den.aspects.brave.nixos = {pkgs, ...}: let
+  den.aspects.brave.nixos = {
+    config,
+    self',
+    lib,
+    ...
+  }: let
     mkExtension = id: "${id};https://clients2.google.com/service/update2/crx";
 
     # shortcuts can't start with "@"; featured caps at three
@@ -7,19 +12,45 @@
 
     brave = "brave-origin.desktop";
   in {
-    environment.systemPackages = [pkgs.brave-origin];
+    imports = [
+      {
+        # per-host new tab page
+        options.brave'.newTabPage = lib.mkOption {
+          type = lib.types.str;
+          default = "about:blank";
+        };
+      }
+    ];
+
+    environment.systemPackages = [self'.packages.brave];
+
+    # tabs and url bar take the gtk font; only brave's process gets maple mono for it
+    fonts.fontconfig.localConf = ''
+      <?xml version="1.0"?>
+      <!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
+      <fontconfig>
+        <match target="pattern">
+          <test name="prgname"><string>brave</string></test>
+          <test name="family"><string>Nunito</string></test>
+          <edit name="family" mode="assign" binding="strong"><string>Maple Mono NF</string></edit>
+        </match>
+      </fontconfig>
+    '';
 
     programs.chromium = {
       enable = true;
 
       extensions = [
         (mkExtension "mnjggcdmjocbbbhaepdhchncahnbgone") # SponsorBlock
+        # theme and font pinned at launch
         (mkExtension "eimadpbcbfnmbkopoojfekhnkhdbieeh") # Dark Reader
         (mkExtension "lnjaiaapbakfhlbjenjkhffcdpoompki") # Catppuccin file icons
         (mkExtension "ghmbeldphafepmbegfdlkpapadhbakde") # Proton Pass
         (mkExtension "bkkmolkhemgaeaeggcmfbghljjjoofoh") # Catppuccin Mocha theme
         # styles imported by hand: https://github.com/catppuccin/userstyles/releases/download/all-userstyles-export/import.json
         (mkExtension "clngdbkpkpeebahjckkjfobafhncgmne") # Stylus
+        (mkExtension "doojmbjmlfjjnbmnoijecmcbfeoakpjm") # NoScript
+        (mkExtension "mdjildafknihdffpkfmmpnpoiajfjnjd") # Consent-O-Matic
       ];
 
       extraOpts = {
@@ -35,7 +66,7 @@
         # Chrome
         BookmarkBarEnabled = false;
         ShowHomeButton = false;
-        NewTabPageLocation = "about:blank";
+        NewTabPageLocation = config.brave'.newTabPage;
         BrowserLabsEnabled = false;
         SideSearchEnabled = false;
         BrowserAddPersonEnabled = false;
@@ -55,6 +86,12 @@
         BraveP3AEnabled = false;
         BraveStatsPingEnabled = false;
         BraveWebDiscoveryEnabled = false;
+
+        # Privacy
+        DefaultBraveHttpsUpgradeSetting = 2; # https only
+        WebRtcIPHandling = "default_public_interface_only";
+        SearchSuggestEnabled = false;
+        NetworkPredictionOptions = 2; # no preloading
       };
     };
 
@@ -70,4 +107,7 @@
 
     environment.sessionVariables.BROWSER = "brave-origin";
   };
+
+  # home assistant's overview dashboard, from nixos-srv
+  den.aspects.brave.provides.home-assistant.nixos.brave'.newTabPage = "https://home.nouritsu.com/nix-overview/home";
 }
