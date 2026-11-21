@@ -54,9 +54,6 @@ in {
               -- the default only escapes spaces
               quote_dropped_files = "Posix",
 
-              -- full key reporting; helix and fish use it
-              enable_kitty_keyboard = true,
-
               -- keybinds, defaults off
               disable_default_key_bindings = true,
               keys = {
