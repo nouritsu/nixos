@@ -75,6 +75,13 @@
         hash = "sha256-nFoNfk7Y/CGKWtscOE5GOxshI5eFmppWvhxHzOJ6mCA=";
       };
 
+      # its flavors have no success colour, so dux falls back to material green; catppuccin's per flavor
+      catppuccinTheme = pkgs.runCommand "catppuccin-theme.json" {nativeBuildInputs = [pkgs.jq];} ''
+        jq --argjson green '{"mocha":"#a6e3a1","macchiato":"#a6da95","frappe":"#a6d189","latte":"#40a02b"}' \
+          '.variants.flavors |= map(.id as $id | with_entries(if (.key == "dark" or .key == "light") then .value.success //= $green[$id] else . end))' \
+          ${inputs.dux-plugin-registry}/themes/catppuccin/theme.json > $out
+      '';
+
       # pinned keys go over the live files; tokens, history and other state stay
       pinSettings = pkgs.writeShellApplication {
         name = "dux-pin-settings";
@@ -140,10 +147,7 @@
 
         # Plugin deps
         pkgs.translate-shell # dankTranslate: trans
-        (pkgs.tesseract.override {enableLanguages = ["eng" "deu"];}) # ocrScanner
-        pkgs.file # ocrScanner: clipboard scans are gated on `file --mime-type`
-        pkgs.librsvg # ocrScanner: rsvg-convert for dropped SVGs
-        pkgs.libnotify # notify-send: ipIndicator IP changes, gameControllerBattery, dankPomodoroTimer
+        pkgs.libnotify # notify-send: ipIndicator IP changes, gameControllerBattery
         pkgs.glib # gdbus: dankKDEConnect image sharing
       ];
 
@@ -158,14 +162,11 @@
       # the bar's media visualiser records desktop audio
       privacyApps'.ignore = ["cava"];
 
-      # screenRecorderYS
-      programs.gpu-screen-recorder.enable = true;
-
       # settings.json is read-only; GUI changes come back through Dux's
       # copy-JSON button into dux-settings.json
       systemd.user.tmpfiles.rules = [
         "L+ %h/.config/DankMaterialShell/settings.json - - - - ${settings}"
-        "L+ %h/.config/DankMaterialShell/themes/catppuccin/theme.json - - - - ${inputs.dux-plugin-registry}/themes/catppuccin/theme.json"
+        "L+ %h/.config/DankMaterialShell/themes/catppuccin/theme.json - - - - ${catppuccinTheme}"
       ];
 
       # dux only reads plugin settings and session at start and saves its own copy over later edits
@@ -208,11 +209,6 @@
           icon = "f020a";
           cmd = "dms color pick -a";
         };
-        W = {
-          desc = "Wallpaper carousel";
-          icon = "f0e09";
-          cmd = "dms ipc call wallpaperCarousel toggle";
-        };
         k = {
           desc = "KDE Connect";
           icon = "f373";
@@ -245,26 +241,27 @@
 
       programs.dux-shell = {
         enable = true;
-        package = inputs'.dux.packages.default;
+        # control center bar icons at the default size, like the cpu pill and power button; upstream is 2px bigger
+        package = inputs'.dux.packages.default.overrideAttrs (old: {
+          postInstall =
+            old.postInstall
+            + ''
+              substituteInPlace $out/share/quickshell/dms/Modules/DBar/Widgets/ControlCenterButton.qml \
+                --replace-fail "barIconSize(root.barThickness, -4," "barIconSize(root.barThickness, undefined,"
+            '';
+        });
 
         plugins = {
           dankKDEConnect.enable = true;
           calculator.enable = true;
           emojiLauncher.enable = true;
           commandRunner.enable = true;
-          displayMirror.enable = true;
           webSearch.enable = true;
           sshConnections.enable = true;
-          airQuality.enable = true;
           dankLauncherKeys.enable = true;
-          wallpaperCarousel.enable = true;
-          handMirror.enable = true;
           recentFiles.enable = true;
           dankTranslate.enable = true;
-          systemMonitorPlus.enable = true;
           nixPackageRunner.enable = true;
-          ocrScanner.enable = true;
-          dankPomodoroTimer.enable = true;
           takeABreak.enable = true;
           gameControllerBattery.enable = true;
 
@@ -298,25 +295,6 @@
           windowFx = {
             enable = true;
             src = lib.mkForce self'.packages.dux-window-fx;
-          };
-
-          # widget lookup spanned every bar, hiding the top bar's tray and monitor
-          # hover zone over the pill left its tint stuck after a click; off unless hover is used
-          hiddenBar = {
-            enable = true;
-            src = lib.mkForce (pkgs.applyPatches {
-              name = "dux-plugin-hiddenBar";
-              src = inputs'.dux-plugin-registry.packages.hiddenBar;
-              postPatch = ''
-                substituteInPlace HiddenBarWidget.qml \
-                  --replace-fail 'let myScreen = pluginRoot.parentScreen.name;' \
-                    'let myScreen = pluginRoot.parentScreen.name; let myBarId = BarWidgetService.registrationForItem(pluginRoot)?.context?.barId ?? "";' \
-                  --replace-fail 'BarWidgetService.getWidget(id, myScreen)' \
-                    'BarWidgetService.resolveWidget(id, {screenName: myScreen, barId: myBarId})?.item' \
-                  --replace-fail 'id: triggerZone' \
-                    'id: triggerZone; enabled: pluginRoot.autoExpand || pluginRoot.autoCollapse'
-              '';
-            });
           };
 
           # script path assumed the per-user plugin dir
