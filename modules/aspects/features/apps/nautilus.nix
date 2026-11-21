@@ -18,7 +18,7 @@
         "Music"
         "Videos"
         "Projects"
-        ".config/nixos"
+        "Projects/nixos"
       ]);
     in {
       environment.systemPackages = [

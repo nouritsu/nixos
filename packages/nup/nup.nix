@@ -22,7 +22,7 @@ in {
         pkgs.nix-update
       ];
       text = ''
-        flake=''${NH_FLAKE:-$HOME/.config/nixos}
+        flake=''${NH_FLAKE:-$HOME/Projects/nixos}
         system=${pkgs.stdenv.hostPlatform.system}
         host=$(uname -n)
 

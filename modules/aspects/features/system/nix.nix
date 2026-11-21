@@ -37,7 +37,7 @@
 
       programs.nh = {
         enable = true;
-        flake = "${config.users.users.${primary}.home}/.config/nixos";
+        flake = "${config.users.users.${primary}.home}/Projects/nixos";
 
         package = lib.mkIf (substituters != []) (pkgs.symlinkJoin {
           inherit (pkgs.nh) name meta;

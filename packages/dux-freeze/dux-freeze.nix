@@ -14,7 +14,7 @@ in {
         pkgs.nix-output-monitor
       ];
       text = ''
-        flake=''${NH_FLAKE:-$HOME/.config/nixos}
+        flake=''${NH_FLAKE:-$HOME/Projects/nixos}
         host=$(uname -n)
         dir=''${XDG_CONFIG_HOME:-$HOME/.config}/DankMaterialShell
         settings=modules/aspects/features/desktop/dux-settings.json

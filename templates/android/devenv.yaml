@@ -12,11 +12,11 @@ inputs:
       nixpkgs:
         follows: nixpkgs
   # house style: treefmt, git hooks, dotenv, claude
-  conf-nixos:
-    url: github:nouritsu/conf-nixos
+  nixos:
+    url: github:nouritsu/nixos
     flake: false
 imports:
-  - conf-nixos/templates/base
+  - nixos/templates/base
 nixpkgs:
   allow_unfree: true
   android_sdk:
