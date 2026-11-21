@@ -4,7 +4,6 @@
     desktop
     gaming
     extra.game-mods
-    extra.emulation
     development
     office
     ai

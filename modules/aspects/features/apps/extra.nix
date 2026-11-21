@@ -18,6 +18,7 @@
       }: {
         environment.systemPackages = [
           pkgs.ffmpeg-full
+          pkgs.constrict
           self'.packages.kdenlive
           self'.packages.imv
           self'.packages.mpv
@@ -153,16 +154,11 @@
       ...
     }: {
       environment.systemPackages = [
-        pkgs.anki
         pkgs.drawio
         self'.packages.splashtop-business
       ];
 
       isup'.checks = {
-        ankiweb = {
-          name = "AnkiWeb";
-          url = "https://ankiweb.net";
-        };
         splashtop = {
           name = "Splashtop";
           status = "https://status.splashtop.com";
@@ -424,24 +420,6 @@
           cmd = lib.getExe pkgs.r2modman;
           app-id = "r2modman";
         };
-      };
-    };
-
-    emulation.nixos = {
-      self',
-      pkgs,
-      lib,
-      ...
-    }: let
-      eden = self'.packages.novpn.wrap pkgs.eden;
-    in {
-      environment.systemPackages = [eden];
-
-      which-key'.menu.g.submenu.e = {
-        desc = "Eden";
-        icon = "f07e1";
-        cmd = lib.getExe eden;
-        app-id = "eden_emu|^eden$";
       };
     };
 

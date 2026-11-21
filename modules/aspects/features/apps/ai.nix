@@ -46,7 +46,6 @@
       };
     in {
       environment.systemPackages = [
-        self'.packages.opencode
         self'.packages.claude-code
         claude-desktop
         pkgs.code-cursor
@@ -90,7 +89,6 @@
       };
 
       programs.fish.shellAbbrs = {
-        oc = "opencode";
         c = "claude";
         cr = "claude --resume";
         cn = "claude --continue";
