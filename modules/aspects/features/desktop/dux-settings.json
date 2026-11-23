@@ -184,6 +184,7 @@
   "radiusStrength": 38,
   "clockFormat": "auto",
   "showSeconds": true,
+  "motionDuration": 0,
   "popupTransparency": 0.85,
   "blurEnabled": true,
   "blurBorderEnabled": true,
@@ -204,6 +205,81 @@
     "restart"
   ],
   "powerMenuDefaultAction": "lock",
+  "dockConfigs": [
+    {
+      "id": "dock",
+      "name": "Dock",
+      "enabled": false,
+      "screenPreferences": [
+        "all"
+      ],
+      "showOnLastDisplay": true,
+      "position": 1,
+      "mode": "compact",
+      "middleClickAction": "close",
+      "taskbarAlign": "center",
+      "widgetExpansion": "popout",
+      "iconSize": 42,
+      "spacing": 8,
+      "itemSpacing": 8,
+      "margin": 8,
+      "bottomGap": 0,
+      "transparency": 1,
+      "followInterfaceStyle": true,
+      "autoHide": false,
+      "smartAutoHide": false,
+      "useOverlayLayer": false,
+      "editOnRightClick": false,
+      "showEditWidgetsInContextMenu": true,
+      "showOnFullscreen": false,
+      "openOnOverview": false,
+      "groupByApp": false,
+      "separatePinnedAndRunningApps": false,
+      "showRunningApps": true,
+      "restoreSpecialWorkspaceOnClick": false,
+      "isolateDisplays": false,
+      "indicatorStyle": "circle",
+      "borderEnabled": false,
+      "borderColor": "surfaceText",
+      "borderOpacity": 1,
+      "borderThickness": 1,
+      "launcherEnabled": true,
+      "launcherLogoMode": "os",
+      "launcherLogoCustomPath": "",
+      "launcherLogoColorOverride": "",
+      "launcherLogoSizeOffset": 0,
+      "launcherLogoBrightness": 0.5,
+      "launcherLogoContrast": 1,
+      "maxVisibleApps": 0,
+      "maxVisibleRunningApps": 0,
+      "showOverflowBadge": true,
+      "showTrash": false,
+      "trashFileManager": "default",
+      "trashCustomCommand": "",
+      "magnification": false,
+      "magnificationScale": 130,
+      "magnificationProfile": "parabolic",
+      "magnificationExpand": false,
+      "order": [],
+      "widgets": [
+        {
+          "id": "dock_launcher",
+          "widgetId": "dockLauncher",
+          "enabled": true
+        },
+        {
+          "id": "dock_apps",
+          "widgetId": "appsDock",
+          "enabled": true
+        },
+        {
+          "id": "dock_trash",
+          "widgetId": "dockTrash",
+          "enabled": true
+        }
+      ]
+    }
+  ],
   "currentThemeCategory": "registry",
   "dmsWindowsFloatingSeeded": [
     "niri"
@@ -353,6 +429,36 @@
   "frameLauncherEmergeSide": "bottom",
   "barInsetPaddingSyncAll": true,
   "spotlightBarShowModeChips": true,
+  "dashTabs": [
+    {
+      "id": "overview",
+      "enabled": true
+    },
+    {
+      "id": "media",
+      "enabled": true
+    },
+    {
+      "id": "wallpaper",
+      "enabled": true
+    },
+    {
+      "id": "weather",
+      "enabled": true
+    },
+    {
+      "id": "wellbeing",
+      "enabled": true
+    },
+    {
+      "id": "notifications",
+      "enabled": false
+    },
+    {
+      "id": "settings",
+      "enabled": false
+    }
+  ],
   "dashCards": [
     {
       "id": "weather",
@@ -491,7 +597,6 @@
   "notificationPopupBodyInvokesAction": true,
   "lockPamExternallyManaged": true,
   "notificationShowTimeoutBar": true,
-  "notificationAnimationDuration": 400,
   "notificationHistoryMaxAgeDays": 30,
   "osdAlwaysShowValue": true,
   "osdPosition": 6,
@@ -704,7 +809,8 @@
           "id": "runningApps",
           "enabled": true,
           "runningAppsCurrentMonitor": false,
-          "runningAppsGroupByApp": false
+          "runningAppsGroupByApp": false,
+          "runningAppsCurrentWorkspace": true
         },
         {
           "id": "columnWidth",
@@ -770,6 +876,89 @@
       "autoHideStrict": false
     }
   ],
+  "desktopWidgetInstances": [
+    {
+      "id": "dw_1795452661924_j4wvvj4nl",
+      "widgetType": "systemMonitor",
+      "name": "System Monitor",
+      "enabled": true,
+      "config": {
+        "layout": "tiles",
+        "style": "classic",
+        "barStyle": "brackets",
+        "listStyle": "rows",
+        "metrics": [
+          {
+            "device": "cpu",
+            "graph": true,
+            "on": true,
+            "vals": [
+              "usage",
+              "temp",
+              "clock"
+            ]
+          },
+          {
+            "device": "memory",
+            "graph": true,
+            "on": true,
+            "vals": [
+              "used"
+            ]
+          },
+          {
+            "device": "net",
+            "graph": true,
+            "on": true,
+            "vals": [
+              "down",
+              "up"
+            ]
+          },
+          {
+            "device": "disk:nvme0n1",
+            "graph": true,
+            "on": true,
+            "vals": [
+              "space",
+              "read",
+              "write"
+            ]
+          },
+          {
+            "device": "gpu:0000:0b:00.0",
+            "graph": true,
+            "on": true,
+            "vals": [
+              "usage",
+              "temp",
+              "vram",
+              "power"
+            ]
+          }
+        ],
+        "graphInterval": 600,
+        "legend": "list",
+        "barNames": false,
+        "barOrientation": "auto",
+        "showHeader": true,
+        "title": "",
+        "showTopProcesses": true,
+        "topProcessCount": 5,
+        "topProcessSortBy": "cpu",
+        "background": "card",
+        "textShadow": true,
+        "transparency": 0.6,
+        "colorMode": "primary",
+        "customColor": "#ffffff",
+        "displayPreferences": [
+          "all"
+        ],
+        "showOnOverlay": false,
+        "showOnOverview": true
+      }
+    }
+  ],
   "builtInPluginSettings": {
     "dms_settings_search": {
       "trigger": "?"
@@ -814,5 +1003,5 @@
   "batteryMonitorTimeout": 0,
   "batteryLockTimeout": 0,
   "batterySuspendTimeout": 0,
-  "configVersion": 43
+  "configVersion": 46
 }
