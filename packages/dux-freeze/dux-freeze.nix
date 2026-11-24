@@ -19,6 +19,8 @@ in {
         dir=''${XDG_CONFIG_HOME:-$HOME/.config}/DankMaterialShell
         settings=modules/aspects/features/desktop/dux-settings.json
         plugins=modules/aspects/features/desktop/dux-plugin-settings.json
+        session=modules/aspects/features/desktop/dux-session.json
+        liveSession=''${XDG_STATE_HOME:-$HOME/.local/state}/DankMaterialShell/session.json
         state=''${XDG_STATE_HOME:-$HOME/.local/state}/dux-freeze
 
         export GUM_SPIN_SPINNER_FOREGROUND="#${palette.base0E}"
@@ -51,6 +53,7 @@ in {
           if [[ -z $landed && -f $work/settings.old ]]; then
             cp "$work/settings.old" "$settings"
             cp "$work/plugins.old" "$plugins"
+            cp "$work/session.old" "$session"
           fi
           if ((status)) && [[ -z $reported ]]; then
             log error "Failed at $step, the repo is as it was"
@@ -63,7 +66,7 @@ in {
         trap cleanup EXIT
 
         stage 1 "Reading Dux"
-        if ! git diff --quiet HEAD -- "$settings" "$plugins"; then
+        if ! git diff --quiet HEAD -- "$settings" "$plugins" "$session"; then
           fail "The pinned files have uncommitted changes"
         fi
         if ! dms ipc call settings dump >"$work/live.json" 2>/dev/null || ! jq -e 'type == "object"' "$work/live.json" >/dev/null 2>&1; then
@@ -80,12 +83,17 @@ in {
         if [[ -z $pluginBase ]]; then
           fail "Couldn't find the plugin pins dms.service started with"
         fi
+        sessionBase=$(grep -o '/nix/store/[^ ]*-dux-session.json' "$pin" 2>/dev/null | head -n1 || true)
+        if [[ -z $sessionBase ]]; then
+          fail "Couldn't find the session pins dms.service started with"
+        fi
 
         # freezes since that switch move the base on
-        switch="$base $pluginBase"
+        switch="$base $pluginBase $sessionBase"
         if [[ -f $state/switch && $(<"$state/switch") == "$switch" ]]; then
           base=$state/settings.json
           pluginBase=$state/plugins.json
+          sessionBase=$state/session.json
         fi
 
         gum spin --show-stdout --show-error --title "Evaluating $host's settings" -- nix eval --json ".#nixosConfigurations.$host.config.dux'.settings" >"$work/built.json"
@@ -96,8 +104,11 @@ in {
         }
         freeze settings "$base" "$work/live.json" "$settings" >"$work/settings.out"
         freeze plugins "$pluginBase" "$dir/plugin_settings.json" "$plugins" >"$work/plugins.out"
+        # pinned keys only, like plugins: the rest of session is dux's own state
+        freeze plugins "$sessionBase" "$liveSession" "$session" >"$work/session.out"
         jq .settings "$work/settings.out" >"$work/settings.new"
         jq .settings "$work/plugins.out" >"$work/plugins.new"
+        jq .settings "$work/session.out" >"$work/session.new"
 
         while IFS=$'\t' read -r path why; do
           if [[ $why == repo ]]; then
@@ -105,7 +116,7 @@ in {
           else
             log warn "$path is rewritten by $host's overrides, left as is"
           fi
-        done < <(jq -r '.conflicts[] | [(.path | map(tostring) | join(".")), .why] | @tsv' "$work/settings.out" "$work/plugins.out")
+        done < <(jq -r '.conflicts[] | [(.path | map(tostring) | join(".")), .why] | @tsv' "$work/settings.out" "$work/plugins.out" "$work/session.out")
 
         changed=""
         show() {
@@ -117,6 +128,7 @@ in {
         }
         show "$settings" "$work/settings.new"
         show "$plugins" "$work/plugins.new"
+        show "$session" "$work/session.new"
         if [[ -z $changed ]]; then
           log info "Nothing to freeze, the repo matches Dux"
           exit 0
@@ -124,8 +136,10 @@ in {
 
         cp "$settings" "$work/settings.old"
         cp "$plugins" "$work/plugins.old"
+        cp "$session" "$work/session.old"
         cp "$work/settings.new" "$settings"
         cp "$work/plugins.new" "$plugins"
+        cp "$work/session.new" "$session"
 
         gum spin --show-stdout --show-error --title "Listing hosts" -- nix eval --json .#nixosConfigurations --apply builtins.attrNames >"$work/hosts.json"
         mapfile -t hosts < <(jq -r '.[]' "$work/hosts.json")
@@ -147,12 +161,14 @@ in {
           echo
           jq -r '[.applied[][0]] | unique | select(length > 0) | "settings: " + join(", ")' "$work/settings.out"
           jq -r '[.applied[] | join(".")] | select(length > 0) | "plugins: " + join(", ")' "$work/plugins.out"
+          jq -r '[.applied[] | join(".")] | select(length > 0) | "session: " + join(", ")' "$work/session.out"
         } >"$work/commit"
-        git commit --quiet --no-verify --file "$work/commit" --only -- "$settings" "$plugins"
+        git commit --quiet --no-verify --file "$work/commit" --only -- "$settings" "$plugins" "$session"
         landed=1
         mkdir -p "$state"
         jq .base "$work/settings.out" >"$state/settings.json"
         jq .base "$work/plugins.out" >"$state/plugins.json"
+        jq .base "$work/session.out" >"$state/session.json"
         echo "$switch" >"$state/switch"
         log info "Landed $(git rev-parse --short HEAD) on $(git branch --show-current), switch when ready"
       '';

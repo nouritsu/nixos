@@ -63,11 +63,13 @@
       };
 
       # theme schedule off, night light on its schedule
-      session = (pkgs.formats.json {}).generate "dux-session.json" {
-        themeModeAutoEnabled = false;
-        nightModeEnabled = true;
-        nightModeAutoEnabled = true;
-      };
+      # desktop widget geometry per screen, frozen by dux-freeze
+      session = (pkgs.formats.json {}).generate "dux-session.json" (lib.importJSON ./dux-session.json
+        // {
+          themeModeAutoEnabled = false;
+          nightModeEnabled = true;
+          nightModeAutoEnabled = true;
+        });
 
       # nixos-artwork's nineish catppuccin mocha, at 4k
       wallpaper = pkgs.fetchurl {
