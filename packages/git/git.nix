@@ -17,7 +17,7 @@ in {
     # "" clears any helper set in a lower scope
     gh = ["" "${lib.getExe pkgs.gh} auth git-credential"];
 
-    # in every repo, so a stray secret or build output can't be committed
+    # in every repo, so a stray secret, build output or tool-local file can't be committed
     ignore = pkgs.writeText "gitignore" ''
       .env
       .env.*
@@ -32,6 +32,13 @@ in {
       .direnv/
       result
       result-*
+      .claude/
+      CLAUDE.local.md
+      .mcp.json
+      .devenv*
+      devenv.local.nix
+      devenv.local.yaml
+      .pre-commit-config.yaml
     '';
   in {
     packages.git = wrappers.wrappers.git.wrap [
