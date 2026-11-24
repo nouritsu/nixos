@@ -48,8 +48,8 @@
       sops.defaultSopsFile = ./secrets.yaml;
 
       # home assistant: the dux widget and claude's mcp
-      sops.secrets."ha-pc-token" = {inherit owner;};
-      sops.secrets."ha-claude-token" = {inherit owner;};
+      sops.secrets."homeassistant/pc-token" = {inherit owner;};
+      sops.secrets."homeassistant/claude-token" = {inherit owner;};
 
       # no battery: weather grows up into its slot, level with the clock
       dux'.settingsOverrides = [

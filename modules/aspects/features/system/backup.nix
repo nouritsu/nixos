@@ -36,13 +36,13 @@
         Match All
       '';
 
-      sops.secrets."homelab-restic-password".owner = user;
+      sops.secrets."backup/restic-password".owner = user;
 
       # the pi can't delete, so pruning happens here
       services.restic.backups.homelab-prune = {
         repository = repo;
         inherit user;
-        passwordFile = config.sops.secrets."homelab-restic-password".path;
+        passwordFile = config.sops.secrets."backup/restic-password".path;
         paths = [];
         initialize = false;
         pruneOpts = ["--keep-daily 7" "--keep-weekly 4" "--keep-monthly 6"];

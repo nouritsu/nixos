@@ -3,7 +3,7 @@
     user = "nix-ssh";
   in {
     builds-on-laptop.nixos = {config, ...}: {
-      sops.secrets."nix-builder-key" = {};
+      sops.secrets."nix/builder-key" = {};
 
       nix.distributedBuilds = true;
       # laptop fetches inputs from the caches, not over wi-fi from here
@@ -13,7 +13,7 @@
           hostName = "laptop";
           protocol = "ssh-ng";
           sshUser = user;
-          sshKey = config.sops.secrets."nix-builder-key".path;
+          sshKey = config.sops.secrets."nix/builder-key".path;
 
           systems = ["x86_64-linux" "i686-linux"];
           supportedFeatures = ["benchmark" "big-parallel" "kvm" "nixos-test"];

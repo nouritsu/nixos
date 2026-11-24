@@ -3,11 +3,11 @@
     port = 5000;
   in {
     serve.nixos = {config, ...}: {
-      sops.secrets."nix-cache-key" = {};
+      sops.secrets."nix/cache-key" = {};
 
       services.harmonia.cache = {
         enable = true;
-        signKeyPaths = [config.sops.secrets."nix-cache-key".path];
+        signKeyPaths = [config.sops.secrets."nix/cache-key".path];
         settings = {
           bind = "[::]:${toString port}";
 

@@ -86,7 +86,7 @@ in {
       name = "claude-ha-headers";
       runtimeInputs = [pkgs.jq];
       text = ''
-        jq -n --rawfile token /run/secrets/ha-claude-token \
+        jq -n --rawfile token /run/secrets/homeassistant/claude-token \
           '{Authorization: "Bearer \($token | rtrimstr("\n"))"}'
       '';
     };

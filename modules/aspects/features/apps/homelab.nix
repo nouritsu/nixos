@@ -203,7 +203,7 @@
             pin "$dir/immich.ini" "$(< ${theme})" || true
 
             # legacy: the app's first profile; key via printf, off argv
-            key=${config.sops.secrets."immich-api-key".path}
+            key=${config.sops.secrets."immich/api-key".path}
             if [ -r "$key" ]; then
               pin "$dir/profiles/legacy.ini" \
                 "$(printf '[immich]\nserverUrl=%s\napiKey=%s' ${lib.escapeShellArg (address "photos")} "$(< "$key")")" || true
@@ -216,7 +216,7 @@
       ];
     };
   in {
-    sops.secrets."immich-api-key" = {
+    sops.secrets."immich/api-key" = {
       sopsFile = config.secrets'.shared;
       inherit owner;
     };

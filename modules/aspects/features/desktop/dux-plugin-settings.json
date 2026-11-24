@@ -85,7 +85,7 @@
     "refreshInterval": 30
   },
   "homeAssistantMonitor": {
-    "hassTokenPath": "/run/secrets/ha-pc-token",
+    "hassTokenPath": "/run/secrets/homeassistant/pc-token",
     "showAttributes": false,
     "showButtonsOnStatusBar": true
   },

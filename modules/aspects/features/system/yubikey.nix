@@ -53,12 +53,12 @@
       # one origin, so a key registered once works on both hosts
       security.pam.u2f.settings = {
         origin = "pam://aneesh";
-        authfile = config.sops.secrets."u2f-keys".path;
+        authfile = config.sops.secrets."u2f/keys".path;
         cue = true;
       };
 
       # shatterlock runs pam as the user
-      sops.secrets."u2f-keys" = {
+      sops.secrets."u2f/keys" = {
         sopsFile = config.secrets'.shared;
         mode = "0444";
       };
