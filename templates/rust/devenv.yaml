@@ -18,7 +18,7 @@ inputs:
         follows: nixpkgs
   # house style: treefmt, git hooks, dotenv, claude
   nixos:
-    url: github:nouritsu/nixos
+    url: git+https://codeberg.org/nouritsu/nixos
     flake: false
 imports:
   - nixos/templates/base

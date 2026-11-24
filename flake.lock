@@ -244,15 +244,15 @@
       "locked": {
         "lastModified": 1793880051,
         "narHash": "sha256-335yg6dxA4YEy8bsWgSA3S9+GOUr+FI01VSaKjQ9Z+w=",
-        "owner": "nouritsu",
-        "repo": "dux-audigon",
+        "ref": "refs/heads/main",
         "rev": "17afcf65fbfef01984917b33dfe38b954fe26a8a",
-        "type": "github"
+        "revCount": 43,
+        "type": "git",
+        "url": "https://codeberg.org/nouritsu/dux-audigon"
       },
       "original": {
-        "owner": "nouritsu",
-        "repo": "dux-audigon",
-        "type": "github"
+        "type": "git",
+        "url": "https://codeberg.org/nouritsu/dux-audigon"
       }
     },
     "dux-column-width": {
@@ -264,15 +264,15 @@
       "locked": {
         "lastModified": 1795298850,
         "narHash": "sha256-+R54lu9uJpkEx9A8Al2zEbrsYCgSOg4c91/uIng4hig=",
-        "owner": "nouritsu",
-        "repo": "dux-column-width",
+        "ref": "refs/heads/main",
         "rev": "38482a4e601fa65f519a26bdfc47ee9e85b74935",
-        "type": "github"
+        "revCount": 1,
+        "type": "git",
+        "url": "https://codeberg.org/nouritsu/dux-column-width"
       },
       "original": {
-        "owner": "nouritsu",
-        "repo": "dux-column-width",
-        "type": "github"
+        "type": "git",
+        "url": "https://codeberg.org/nouritsu/dux-column-width"
       }
     },
     "dux-plugin-registry": {
@@ -304,15 +304,15 @@
       "locked": {
         "lastModified": 1795298850,
         "narHash": "sha256-zbGWbeX5WePvGYGTzopb4P2iFrpyc0L3dlqFY7h9uxQ=",
-        "owner": "nouritsu",
-        "repo": "dux-power-draw",
+        "ref": "refs/heads/main",
         "rev": "5f2dd63cabea9c17e3ef762cf9782ffe8936dfa0",
-        "type": "github"
+        "revCount": 1,
+        "type": "git",
+        "url": "https://codeberg.org/nouritsu/dux-power-draw"
       },
       "original": {
-        "owner": "nouritsu",
-        "repo": "dux-power-draw",
-        "type": "github"
+        "type": "git",
+        "url": "https://codeberg.org/nouritsu/dux-power-draw"
       }
     },
     "dux-privacy-apps": {
@@ -324,15 +324,15 @@
       "locked": {
         "lastModified": 1795298850,
         "narHash": "sha256-U4DIktN1HCTk0GHLr04FohH6xMOJGTVYWK2q1sNS+/0=",
-        "owner": "nouritsu",
-        "repo": "dux-privacy-apps",
+        "ref": "refs/heads/main",
         "rev": "c63b5ae7d50be05175d410117bebd8f91e6764a6",
-        "type": "github"
+        "revCount": 1,
+        "type": "git",
+        "url": "https://codeberg.org/nouritsu/dux-privacy-apps"
       },
       "original": {
-        "owner": "nouritsu",
-        "repo": "dux-privacy-apps",
-        "type": "github"
+        "type": "git",
+        "url": "https://codeberg.org/nouritsu/dux-privacy-apps"
       }
     },
     "dux-qt-base": {
@@ -643,15 +643,15 @@
       "locked": {
         "lastModified": 1774822059,
         "narHash": "sha256-32CumkXaH3QOkPKbpjYHmWhpa9glsqCsvgDuwnrYh1U=",
-        "owner": "nouritsu",
-        "repo": "niri-cwd",
+        "ref": "refs/heads/main",
         "rev": "49ad27cebb6fb9f437ae910dd7f8fb1e57863b09",
-        "type": "github"
+        "revCount": 5,
+        "type": "git",
+        "url": "https://codeberg.org/nouritsu/niri-cwd"
       },
       "original": {
-        "owner": "nouritsu",
-        "repo": "niri-cwd",
-        "type": "github"
+        "type": "git",
+        "url": "https://codeberg.org/nouritsu/niri-cwd"
       }
     },
     "niri-pip": {
@@ -1117,15 +1117,15 @@
       "locked": {
         "lastModified": 1795270254,
         "narHash": "sha256-z3gS2Gn7daZwohlR67b2vFyfbFtK767IgMrcvSWqN5k=",
-        "owner": "nouritsu",
-        "repo": "shatterlock",
+        "ref": "refs/heads/main",
         "rev": "a359c3394d66b62016cc04d23063bfd37963a08e",
-        "type": "github"
+        "revCount": 45,
+        "type": "git",
+        "url": "https://codeberg.org/nouritsu/shatterlock"
       },
       "original": {
-        "owner": "nouritsu",
-        "repo": "shatterlock",
-        "type": "github"
+        "type": "git",
+        "url": "https://codeberg.org/nouritsu/shatterlock"
       }
     },
     "sops-nix": {

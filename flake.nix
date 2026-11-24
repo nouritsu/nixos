@@ -54,29 +54,29 @@
     };
 
     shatterlock = {
-      url = "github:nouritsu/shatterlock";
+      url = "git+https://codeberg.org/nouritsu/shatterlock";
       inputs.nixpkgs.follows = "nixpkgs";
       # its niri patch has to apply to this niri
       inputs.niri.follows = "niri";
     };
 
     dux-audigon = {
-      url = "github:nouritsu/dux-audigon";
+      url = "git+https://codeberg.org/nouritsu/dux-audigon";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     dux-column-width = {
-      url = "github:nouritsu/dux-column-width";
+      url = "git+https://codeberg.org/nouritsu/dux-column-width";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     dux-power-draw = {
-      url = "github:nouritsu/dux-power-draw";
+      url = "git+https://codeberg.org/nouritsu/dux-power-draw";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     dux-privacy-apps = {
-      url = "github:nouritsu/dux-privacy-apps";
+      url = "git+https://codeberg.org/nouritsu/dux-privacy-apps";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -112,7 +112,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     niri-cwd = {
-      url = "github:nouritsu/niri-cwd";
+      url = "git+https://codeberg.org/nouritsu/niri-cwd";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-parts.follows = "flake-parts";
     };
