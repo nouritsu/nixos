@@ -17,6 +17,7 @@
 
       secrets
       dux.calendar
+      services.beszel
       syncthing
       syncthing.laptop
 
