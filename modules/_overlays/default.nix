@@ -1,9 +1,0 @@
-inputs: [
-  inputs.cachyos-kernel.overlays.pinned
-  inputs.niri.overlays.default
-  (import ./niri.nix)
-  (import ./mcp-nixos.nix)
-  (import ./yubikey-touch-detector.nix)
-  # hide-from-own-capture
-  inputs.shatterlock.overlays.niri
-]
